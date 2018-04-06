@@ -19,7 +19,7 @@ const (
 	P256PARAMA       = -3
 )
 
-func isEven(k *big.Int) bool {
+func IsEven(k *big.Int) bool {
 	z := big.NewInt(0)
 	z.Mod(k, big.NewInt(2))
 	if z.Int64() == 0 {
@@ -224,7 +224,7 @@ func deCompress(yTilde int, xValue []byte, curve *elliptic.CurveParams) (*PubKey
 	}
 
 	yCoord := big.NewInt(0)
-	if (isEven(yValue) && 0 != yTilde) || (!isEven(yValue) && 1 != yTilde) {
+	if (IsEven(yValue) && 0 != yTilde) || (!IsEven(yValue) && 1 != yTilde) {
 		yCoord.Sub(curve.P, yValue)
 	} else {
 		yCoord.Set(yValue)
@@ -257,8 +257,8 @@ func DecodePoint(encodeData []byte) (*PubKey, error) {
 		return pubKey, nil
 
 	case 0x04, 0x06, 0x07: //uncompressed
-		pubKeyX := new(big.Int).SetBytes(encodeData[FLAGLEN: FLAGLEN+XORYVALUELEN])
-		pubKeyY := new(big.Int).SetBytes(encodeData[FLAGLEN+XORYVALUELEN: NOCOMPRESSEDLEN])
+		pubKeyX := new(big.Int).SetBytes(encodeData[FLAGLEN : FLAGLEN+XORYVALUELEN])
+		pubKeyY := new(big.Int).SetBytes(encodeData[FLAGLEN+XORYVALUELEN : NOCOMPRESSEDLEN])
 		return &PubKey{pubKeyX, pubKeyY}, nil
 
 	default:

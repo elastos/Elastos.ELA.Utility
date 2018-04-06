@@ -11,6 +11,7 @@ import (
 	"github.com/elastos/Elastos.ELA.Utility/common/serialization"
 	"github.com/elastos/Elastos.ELA.Utility/core/contract/program"
 	. "github.com/elastos/Elastos.ELA.Utility/core/signature"
+	"github.com/elastos/Elastos.ELA.Utility/crypto"
 )
 
 const (
@@ -336,4 +337,109 @@ func (tx *Transaction) GetTransactionType() (byte, error) {
 		return 0, errors.New("invalid transaction type, redeem script not a standard or multi sign type")
 	}
 	return code[len(code)-1], nil
+}
+
+func (tx *Transaction) GetStandardSigner() (*Uint168, error) {
+	code, err := tx.GetTransactionCode()
+	if err != nil {
+		return nil, err
+	}
+	if len(code) != PublicKeyScriptLength || code[len(code)-1] != STANDARD {
+		return nil, errors.New("not a valid standard transaction code, length not match")
+	}
+	// remove last byte STANDARD
+	code = code[:len(code)-1]
+	script := make([]byte, PublicKeyScriptLength)
+	copy(script, code[:PublicKeyScriptLength])
+
+	return ToProgramHash(script)
+}
+
+func (tx *Transaction) GetMultiSignSigners() ([]*Uint168, error) {
+	scripts, err := tx.GetMultiSignPublicKeys()
+	if err != nil {
+		return nil, err
+	}
+
+	var signers []*Uint168
+	for _, script := range scripts {
+		script = append(script, STANDARD)
+		hash, _ := ToProgramHash(script)
+		signers = append(signers, hash)
+	}
+
+	return signers, nil
+}
+
+func (tx *Transaction) getM() int {
+	return int(tx.Programs[0].Code[0] - PUSH1 + 1)
+}
+
+func (tx *Transaction) GetSignStatus() (haveSign, needSign int, err error) {
+	if len(tx.Programs) <= 0 {
+		return -1, -1, errors.New("missing transaction program")
+	}
+
+	signType, err := tx.GetTransactionType()
+	if err != nil {
+		return -1, -1, err
+	}
+
+	if signType == STANDARD {
+		signed := len(tx.Programs[0].Parameter) / SignatureScriptLength
+		return signed, 1, nil
+
+	} else if signType == MULTISIG {
+
+		haveSign = len(tx.Programs[0].Parameter) / SignatureScriptLength
+
+		return haveSign, tx.getM(), nil
+	}
+
+	return -1, -1, errors.New("invalid transaction type")
+}
+
+func (tx *Transaction) AppendSignature(signerIndex int, signature []byte) error {
+	if len(tx.Programs) <= 0 {
+		return errors.New("missing transaction program")
+	}
+	// Create new signature
+	newSign := append([]byte{}, byte(len(signature)))
+	newSign = append(newSign, signature...)
+
+	param := tx.Programs[0].Parameter
+
+	// Check if is first signature
+	if param == nil {
+		param = []byte{}
+	} else {
+		// Check if singer already signed
+		publicKeys, err := tx.GetMultiSignPublicKeys()
+		if err != nil {
+			return err
+		}
+		buf := new(bytes.Buffer)
+		tx.SerializeUnsigned(buf)
+		for i := 0; i < len(param); i += SignatureScriptLength {
+			// Remove length byte
+			sign := param[i : i+SignatureScriptLength][1:]
+			publicKey := publicKeys[signerIndex][1:]
+			pubKey, err := crypto.DecodePoint(publicKey)
+			if err != nil {
+				return err
+			}
+			err = crypto.Verify(*pubKey, buf.Bytes(), sign)
+			if err == nil {
+				return errors.New("signer already signed")
+			}
+		}
+	}
+
+	buf := new(bytes.Buffer)
+	buf.Write(param)
+	buf.Write(newSign)
+
+	tx.Programs[0].Parameter = buf.Bytes()
+
+	return nil
 }

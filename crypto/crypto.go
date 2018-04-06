@@ -1,13 +1,13 @@
 package crypto
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
 	"math/big"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/sha256"
 
 	"github.com/elastos/Elastos.ELA.Utility/common/serialization"
 )
@@ -104,4 +104,37 @@ func (e *PubKey) Deserialize(r io.Reader) error {
 		e.Y.Neg(e.Y)
 	}
 	return nil
+}
+
+func (e *PubKey) EncodePoint(isCompressed bool) ([]byte, error) {
+	//if X is infinity, then Y cann't be computed, so here used "||"
+	if nil == e.X || nil == e.Y {
+		infinity := make([]byte, INFINITYLEN)
+		return infinity, nil
+	}
+
+	var encodedData []byte
+
+	if isCompressed {
+		encodedData = make([]byte, COMPRESSEDLEN)
+	} else {
+		encodedData = make([]byte, NOCOMPRESSEDLEN)
+
+		yBytes := e.Y.Bytes()
+		copy(encodedData[NOCOMPRESSEDLEN-len(yBytes):], yBytes)
+	}
+	xBytes := e.X.Bytes()
+	copy(encodedData[COMPRESSEDLEN-len(xBytes):COMPRESSEDLEN], xBytes)
+
+	if isCompressed {
+		if IsEven(e.Y) {
+			encodedData[0] = COMPEVENFLAG
+		} else {
+			encodedData[0] = COMPODDFLAG
+		}
+	} else {
+		encodedData[0] = NOCOMPRESSEDFLAG
+	}
+
+	return encodedData, nil
 }

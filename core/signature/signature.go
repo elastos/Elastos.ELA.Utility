@@ -1,10 +1,10 @@
 package signature
 
 import (
-	"io"
 	"bytes"
-	"errors"
 	"crypto/sha256"
+	"errors"
+	"io"
 
 	. "github.com/elastos/Elastos.ELA.Utility/common"
 	"github.com/elastos/Elastos.ELA.Utility/core/contract/program"
@@ -43,7 +43,7 @@ func GetDataContent(data SignableData) []byte {
 	return buf.Bytes()
 }
 
-func ToProgramHash(code []byte) (Uint168, error) {
+func ToProgramHash(code []byte) (*Uint168, error) {
 	temp := sha256.Sum256(code)
 	md := ripemd160.New()
 	io.WriteString(md, string(temp[:]))
@@ -57,7 +57,7 @@ func ToProgramHash(code []byte) (Uint168, error) {
 	} else if signType == CROSSCHAIN {
 		f = append([]byte{75}, f...)
 	} else {
-		return Uint168{}, errors.New("unknown code signature type")
+		return &Uint168{}, errors.New("unknown code signature type")
 	}
 
 	return Uint168FromBytes(f)

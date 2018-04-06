@@ -84,3 +84,16 @@ func Uint256ParseFromBytes(f []byte) (Uint256, error) {
 	}
 	return Uint256(hash), nil
 }
+
+func Uint256FromBytes(f []byte) (*Uint256, error) {
+	if len(f) != UINT256SIZE {
+		return nil, errors.New("[Common]: Uint256ParseFromBytes err, len != 32")
+	}
+
+	var hash [32]uint8
+	for i := 0; i < 32; i++ {
+		hash[i] = f[i]
+	}
+	value := Uint256(hash)
+	return &value, nil
+}
