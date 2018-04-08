@@ -23,15 +23,15 @@ type CryptoAlgSet struct {
 	Curve     elliptic.Curve
 }
 
-var algSet CryptoAlgSet
+var AlgSet CryptoAlgSet
 
 type PubKey struct {
 	X, Y *big.Int
 }
 
 func init() {
-	algSet.Curve = elliptic.P256()
-	algSet.EccParams = *(algSet.Curve.Params())
+	AlgSet.Curve = elliptic.P256()
+	AlgSet.EccParams = *(AlgSet.Curve.Params())
 }
 
 func Verify(publicKey PubKey, data []byte, signature []byte) error {
@@ -48,7 +48,7 @@ func Verify(publicKey PubKey, data []byte, signature []byte) error {
 
 	pub := new(ecdsa.PublicKey)
 
-	pub.Curve = algSet.Curve
+	pub.Curve = AlgSet.Curve
 	pub.X = new(big.Int).Set(publicKey.X)
 	pub.Y = new(big.Int).Set(publicKey.Y)
 
