@@ -21,8 +21,8 @@ const (
 	Deploy                  TransactionType = 0x04
 	SideMining              TransactionType = 0x05
 	IssueToken              TransactionType = 0x06
-	TransferCrossChainAsset TransactionType = 0x07
-	WithdrawAsset           TransactionType = 0x08
+	WithdrawAsset           TransactionType = 0x07
+	TransferCrossChainAsset TransactionType = 0x08
 )
 
 func (self TransactionType) Name() string {
@@ -41,6 +41,8 @@ func (self TransactionType) Name() string {
 		return "SideMining"
 	case IssueToken:
 		return "IssueToken"
+	case WithdrawAsset:
+		return "WithdrawAsset"
 	case TransferCrossChainAsset:
 		return "TransferCrossChainAsset"
 	default:

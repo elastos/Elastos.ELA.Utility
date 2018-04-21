@@ -19,20 +19,20 @@ func (a *PayloadTransferCrossChainAsset) Data(version byte) []byte {
 
 func (a *PayloadTransferCrossChainAsset) Serialize(w io.Writer, version byte) error {
 	if a.AddressesMap == nil {
-		return errors.New("Invalid publickey map")
+		return errors.New("Invalid address map")
 	}
 
 	if err := common.WriteVarUint(w, uint64(len(a.AddressesMap))); err != nil {
-		return errors.New("publicKey map's length serialize failed")
+		return errors.New("address map's length serialize failed")
 	}
 
 	for k, v := range a.AddressesMap {
 		if err := common.WriteVarString(w, k); err != nil {
-			return errors.New("publicKey map's key serialize failed")
+			return errors.New("address map's key serialize failed")
 		}
 
 		if err := common.WriteVarUint(w, v); err != nil {
-			return errors.New("publicKey map's value serialize failed")
+			return errors.New("address map's index serialize failed")
 		}
 	}
 
@@ -40,13 +40,9 @@ func (a *PayloadTransferCrossChainAsset) Serialize(w io.Writer, version byte) er
 }
 
 func (a *PayloadTransferCrossChainAsset) Deserialize(r io.Reader, version byte) error {
-	if a.AddressesMap == nil {
-		return errors.New("Invalid public key map")
-	}
-
 	length, err := common.ReadVarUint(r, 0)
 	if err != nil {
-		return errors.New("publicKey map's length deserialize failed")
+		return errors.New("address map's length deserialize failed")
 	}
 
 	a.AddressesMap = nil
@@ -54,15 +50,15 @@ func (a *PayloadTransferCrossChainAsset) Deserialize(r io.Reader, version byte) 
 	for i := uint64(0); i < length; i++ {
 		k, err := common.ReadVarString(r)
 		if err != nil {
-			return errors.New("publicKey map's key deserialize failed")
+			return errors.New("address map's key deserialize failed")
 		}
 
-		v, err := common.ReadVarUint(r, 0)
+		index, err := common.ReadVarUint(r, 0)
 		if err != nil {
-			return errors.New("publicKey map's value deserialize failed")
+			return errors.New("address map's index deserialize failed")
 		}
 
-		a.AddressesMap[k] = v
+		a.AddressesMap[k] = index
 	}
 
 	return nil
