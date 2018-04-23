@@ -295,3 +295,23 @@ func NewTrimmedTx(hash Uint256) *Transaction {
 	tx.hash, _ = Uint256FromBytes(hash[:])
 	return tx
 }
+
+func NewCoinBaseTransaction(coinBasePayload *PayloadCoinBase, currentHeight uint32) *Transaction {
+	return &Transaction{
+		TxType:         CoinBase,
+		PayloadVersion: PayloadCoinBaseVersion,
+		Payload:        coinBasePayload,
+		Inputs: []*Input{
+			{
+				Previous: OutPoint{
+					TxID:  EmptyHash,
+					Index: 0x0000,
+				},
+				Sequence: 0x00000000,
+			},
+		},
+		Attributes: []*Attribute{},
+		LockTime:   currentHeight,
+		Programs:   []*Program{},
+	}
+}
