@@ -1,9 +1,9 @@
 package core
 
 import (
-	"io"
 	"bytes"
 	"errors"
+	"io"
 
 	. "github.com/elastos/Elastos.ELA.Utility/common"
 )
@@ -123,9 +123,4 @@ func (b *Block) GetArbitrators(arbiters []string) ([][]byte, error) {
 	}
 
 	return arbitersByte, nil
-}
-
-func (b *Block) GetCurrentArbitratorIndex() (int, error) {
-	//todo finish this when arbitrator election scenario is done
-	return int(b.Header.Height) % 2, nil
 }

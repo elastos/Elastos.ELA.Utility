@@ -89,7 +89,7 @@ func CreateMultiSignRedeemScript(M uint, publicKeys []*PublicKey) ([]byte, error
 }
 
 func ParseMultisigScript(code []byte) ([][]byte, error) {
-	if len(code) < MinMultiSignCodeLength || code[len(code)-1] != MULTISIG {
+	if len(code) < MinMultiSignCodeLength || code[len(code)-1] != CROSSCHAIN {
 		return nil, errors.New("not a valid multi sign transaction code, length not enough")
 	}
 	// remove last byte MULTISIG

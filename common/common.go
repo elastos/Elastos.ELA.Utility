@@ -21,14 +21,6 @@ func BytesReverse(u []byte) []byte {
 	return u
 }
 
-func HexStringToBytesReverse(value string) ([]byte, error) {
-	u, err := hex.DecodeString(value)
-	if err != nil {
-		return u, err
-	}
-	return BytesReverse(u), err
-}
-
 func IsEqualBytes(this []byte, that []byte) bool {
 	if len(this) != len(that) {
 		return false
