@@ -234,6 +234,9 @@ func WriteUint64(writer io.Writer, val uint64) error {
 
 func byteXReader(reader io.Reader, x uint64) ([]byte, error) {
 	p := make([]byte, x)
+	if x == 0 {
+		return p, nil
+	}
 	n, err := reader.Read(p)
 	if n > 0 {
 		return p[:], nil
