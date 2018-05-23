@@ -54,7 +54,7 @@ func (helper *MsgHelper) Read() {
 	go func() {
 		var buf = make([]byte, MaxBufLen)
 		for {
-			len, err := helper.conn.Read(buf[0: MaxBufLen-1])
+			len, err := helper.conn.Read(buf[0 : MaxBufLen-1])
 			buf[MaxBufLen-1] = 0 //Prevent overflow
 			switch err {
 			case nil:
