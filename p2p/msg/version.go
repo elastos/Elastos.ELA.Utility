@@ -1,9 +1,10 @@
 package msg
 
 import (
-	"encoding/binary"
-	"github.com/elastos/Elastos.ELA.Utility/p2p"
 	"io"
+	"encoding/binary"
+
+	"github.com/elastos/Elastos.ELA.Utility/p2p"
 )
 
 type Version struct {

@@ -152,6 +152,22 @@ func GetSigner(code []byte) (*Uint168, error) {
 	return ToProgramHash(script)
 }
 
+func GetCrossChainSigners(code []byte) ([]*Uint168, error) {
+	scripts, err := ParseCrossChainScript(code)
+	if err != nil {
+		return nil, err
+	}
+
+	var signers []*Uint168
+	for _, script := range scripts {
+		script = append(script, STANDARD)
+		hash, _ := ToProgramHash(script)
+		signers = append(signers, hash)
+	}
+
+	return signers, nil
+}
+
 func GetSigners(code []byte) ([]*Uint168, error) {
 	scripts, err := ParseMultisigScript(code)
 	if err != nil {

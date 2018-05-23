@@ -1,8 +1,9 @@
 package msg
 
 import (
-	"github.com/elastos/Elastos.ELA.Utility/p2p"
 	"io"
+
+	"github.com/elastos/Elastos.ELA.Utility/p2p"
 )
 
 type MemPool struct{}
