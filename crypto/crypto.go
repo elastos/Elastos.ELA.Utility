@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"sort"
 
 	"github.com/elastos/Elastos.ELA.Utility/common"
 )
@@ -162,19 +163,15 @@ func (e *PublicKey) Deserialize(r io.Reader) error {
 	return nil
 }
 
-type PubKeySlice []*PublicKey
+func SortPublicKeys(publicKeys []*PublicKey) {
+	sort.Sort(byX(publicKeys))
+}
 
-func (p PubKeySlice) Len() int { return len(p) }
-func (p PubKeySlice) Less(i, j int) bool {
-	r := p[i].X.Cmp(p[j].X)
-	if r <= 0 {
-		return true
-	}
-	return false
-}
-func (p PubKeySlice) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
-}
+type byX []*PublicKey
+
+func (p byX) Len() int           { return len(p) }
+func (p byX) Less(i, j int) bool { return p[i].X.Cmp(p[j].X) <= 0 }
+func (p byX) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func Equal(e1 *PublicKey, e2 *PublicKey) bool {
 	if e1.X.Cmp(e2.X) != 0 {

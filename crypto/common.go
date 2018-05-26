@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"errors"
 	"io"
-	"sort"
 
 	. "github.com/elastos/Elastos.ELA.Utility/common"
 
@@ -63,7 +62,7 @@ func CreateMultiSignRedeemScript(M uint, publicKeys []*PublicKey) ([]byte, error
 	buf.WriteByte(byte(PUSH1 + M - 1))
 
 	//sort pubkey
-	sort.Sort(PubKeySlice(publicKeys))
+	SortPublicKeys(publicKeys)
 
 	// Write public keys
 	for _, pubkey := range publicKeys {
@@ -87,31 +86,17 @@ func ParseMultisigScript(code []byte) ([][]byte, error) {
 	if len(code) < MinMultiSignCodeLength || code[len(code)-1] != MULTISIG {
 		return nil, errors.New("not a valid multi sign transaction code, length not enough")
 	}
-	// remove last byte MULTISIG
-	code = code[:len(code)-1]
-	// remove m
-	code = code[1:]
-	// remove n
-	code = code[:len(code)-1]
-	if len(code)%(PublicKeyScriptLength-1) != 0 {
-		return nil, errors.New("not a valid multi sign transaction code, length not match")
-	}
-
-	var publicKeys [][]byte
-	i := 0
-	for i < len(code) {
-		script := make([]byte, PublicKeyScriptLength-1)
-		copy(script, code[i:i+PublicKeyScriptLength-1])
-		i += PublicKeyScriptLength - 1
-		publicKeys = append(publicKeys, script)
-	}
-	return publicKeys, nil
+	return parsePublicKeys(code)
 }
 
 func ParseCrossChainScript(code []byte) ([][]byte, error) {
 	if len(code) < MinMultiSignCodeLength || code[len(code)-1] != CROSSCHAIN {
 		return nil, errors.New("not a valid cross chain transaction code, length not enough")
 	}
+	return parsePublicKeys(code)
+}
+
+func parsePublicKeys(code []byte) ([][]byte, error) {
 	// remove last byte MULTISIG
 	code = code[:len(code)-1]
 	// remove m

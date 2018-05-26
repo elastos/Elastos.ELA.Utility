@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"math/big"
+	"sort"
 
 	"github.com/itchyny/base58-go"
 )
@@ -152,3 +153,13 @@ func Uint168FromAddressWithCheck(address string) (*Uint168, error) {
 
 	return programHash, nil
 }
+
+func SortProgramHashes(hashes []Uint168) {
+	sort.Sort(programHashes(hashes))
+}
+
+type programHashes []Uint168
+
+func (a programHashes) Len() int           { return len(a) }
+func (a programHashes) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a programHashes) Less(i, j int) bool { return a[i].Compare(a[j]) < 0 }
