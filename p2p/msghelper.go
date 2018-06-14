@@ -10,6 +10,7 @@ const MaxBufLen = 1024 * 16
 
 var (
 	ErrDisconnected   = fmt.Errorf("[MsgHelper] peer disconnected")
+	ErrInvalidHeader  = fmt.Errorf("[MsgHelper] invalid message header")
 	ErrUnmatchedMagic = fmt.Errorf("[MsgHelper] unmatched Magic")
 )
 
@@ -87,8 +88,9 @@ func (helper *MsgHelper) Write(msg Message) {
 	}
 }
 
-func (helper *MsgHelper) append(msg []byte) {
+func (helper *MsgHelper) append(msg []byte) []byte {
 	helper.buf = append(helper.buf, msg...)
+	return helper.buf
 }
 
 func (helper *MsgHelper) reset() {
@@ -101,52 +103,46 @@ func (helper *MsgHelper) unpack(buf []byte) {
 		return
 	}
 
-	if helper.len == 0 { // Buffering message header
+	// Buffer message header
+	if helper.len == 0 {
 		index := HEADERLEN - len(helper.buf)
 		if index > len(buf) { // header not finished, continue read
 			index = len(buf)
-			helper.append(buf[0:index])
+			helper.append(buf[:index])
 			return
 		}
 
-		helper.append(buf[0:index])
-
 		var header header
-		err := header.Deserialize(helper.buf)
-		if err != nil {
+		if err := header.Deserialize(helper.append(buf[:index])); err != nil {
+			helper.handler.OnError(ErrInvalidHeader)
 			helper.reset()
 			return
 		}
 
 		if header.Magic != helper.magic {
 			helper.handler.OnError(ErrUnmatchedMagic)
+			helper.reset()
 			return
 		}
 
 		helper.len = int(header.Length)
 		buf = buf[index:]
 	}
-
 	msgLen := helper.len
 
-	if len(buf) == msgLen { // Just read the full message
-
-		helper.append(buf[:])
-		helper.decode(helper.buf)
-		helper.reset()
-
-	} else if len(buf) < msgLen { // Read part of the message
-
+	// Read part of the message
+	if len(buf) < msgLen {
 		helper.append(buf[:])
 		helper.len = msgLen - len(buf)
-
-	} else { // Read more than the message
-
-		helper.append(buf[0:msgLen])
-		helper.decode(helper.buf)
-		helper.reset()
-		helper.unpack(buf[msgLen:])
+		return
 	}
+
+	// decode received message
+	helper.decode(helper.append(buf[:msgLen]))
+	helper.reset()
+
+	// unpack next message
+	helper.unpack(buf[msgLen:])
 }
 
 func (helper *MsgHelper) decode(buf []byte) {
