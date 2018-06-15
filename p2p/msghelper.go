@@ -9,9 +9,10 @@ import (
 const MaxBufLen = 1024 * 16
 
 var (
-	ErrDisconnected   = fmt.Errorf("[MsgHelper] peer disconnected")
-	ErrInvalidHeader  = fmt.Errorf("[MsgHelper] invalid message header")
-	ErrUnmatchedMagic = fmt.Errorf("[MsgHelper] unmatched Magic")
+	ErrDisconnected    = fmt.Errorf("[MsgHelper] peer disconnected")
+	ErrInvalidHeader   = fmt.Errorf("[MsgHelper] invalid message header")
+	ErrUnmatchedMagic  = fmt.Errorf("[MsgHelper] unmatched magic")
+	ErrMsgSizeExceeded = fmt.Errorf("[MsgHelper] message size exceeded")
 )
 
 // The interface to callback message read errors, message creation and decoded message.
@@ -31,17 +32,19 @@ type MsgHandler interface {
 }
 
 type MsgHelper struct {
-	buf     []byte
-	len     int
-	magic   uint32
-	conn    net.Conn
-	handler MsgHandler
+	buf        []byte
+	len        int
+	magic      uint32
+	maxMsgSize uint32
+	conn       net.Conn
+	handler    MsgHandler
 }
 
 // NewMsgHelper create a new instance of *MsgHelper
-func NewMsgHelper(magic uint32, conn net.Conn, handler MsgHandler) *MsgHelper {
+func NewMsgHelper(magic, maxMsgSize uint32, conn net.Conn, handler MsgHandler) *MsgHelper {
 	helper := new(MsgHelper)
 	helper.magic = magic
+	helper.maxMsgSize = maxMsgSize
 	helper.conn = conn
 	helper.handler = handler
 	return helper
@@ -125,6 +128,12 @@ func (helper *MsgHelper) unpack(buf []byte) {
 			return
 		}
 
+		if header.Length > helper.maxMsgSize {
+			helper.handler.OnError(ErrMsgSizeExceeded)
+			helper.reset()
+			return
+		}
+
 		helper.len = int(header.Length)
 		buf = buf[index:]
 	}
@@ -153,7 +162,7 @@ func (helper *MsgHelper) decode(buf []byte) {
 
 	hdr, err := verify(buf)
 	if err != nil {
-		helper.handler.OnError(fmt.Errorf("[MsgHelper] verify message header failed %s ", err.Error()))
+		helper.handler.OnError(fmt.Errorf("[MsgHelper] verify message header failed %s", err.Error()))
 		return
 	}
 

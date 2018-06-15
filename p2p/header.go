@@ -3,7 +3,6 @@ package p2p
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -46,10 +45,7 @@ func (header *header) Verify(buf []byte) error {
 	sum := common.Sha256D(buf)
 	checksum := sum[:CHECKSUMLEN]
 	if !bytes.Equal(header.Checksum[:], checksum) {
-		return errors.New(
-			fmt.Sprintf("Unmatched Checksum, expecting %s get $s",
-				hex.EncodeToString(checksum),
-				hex.EncodeToString(header.Checksum[:])))
+		return fmt.Errorf("unmatched body checksum")
 	}
 
 	return nil
@@ -69,7 +65,7 @@ func (header *header) Deserialize(buf []byte) error {
 	cmd := buf[CMDOFFSET : CMDOFFSET+CMDLEN]
 	end := bytes.IndexByte(cmd, 0)
 	if end < 0 || end >= CMDLEN {
-		return errors.New("Unexpected Length of CMD")
+		return errors.New("unexpected length of CMD")
 	}
 
 	hdr := bytes.NewReader(buf[:HEADERLEN])
