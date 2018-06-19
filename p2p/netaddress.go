@@ -24,7 +24,7 @@ func NewNetAddress(services uint64, ip [16]byte, port uint16, id uint64) *NetAdd
 	}
 }
 
-func (addr *NetAddress) String() string {
+func (addr NetAddress) String() string {
 	var ip net.IP = addr.IP[:]
 	return fmt.Sprint(ip.String(), ":", addr.Port)
 }
