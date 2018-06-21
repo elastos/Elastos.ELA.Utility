@@ -47,9 +47,6 @@ func ToProgramHash(code []byte) (*Uint168, error) {
 		}
 		return Uint168FromBytes(sum168(PrefixMultisig, code))
 	case CROSSCHAIN:
-		if len(code) < MinMultiSignCodeLength || (len(code)-3)%(PublicKeyScriptLength-1) != 0 {
-			return nil, errors.New("[ToProgramHash] error, not a valid crosschain script")
-		}
 		return Uint168FromBytes(sum168(PrefixCrossChain, code))
 	default:
 		return nil, errors.New("[ToProgramHash] error, unknown script type")
@@ -93,6 +90,15 @@ func CreateMultiSignRedeemScript(M uint, publicKeys []*PublicKey) ([]byte, error
 	buf.WriteByte(MULTISIG)
 
 	return buf.Bytes(), nil
+}
+
+func CreateCrossChainRedeemScript(genesisHash Uint256) []byte {
+	buf := new(bytes.Buffer)
+	buf.WriteByte(byte(len(genesisHash.Bytes())))
+	buf.Write(genesisHash.Bytes())
+	buf.WriteByte(byte(CROSSCHAIN))
+
+	return buf.Bytes()
 }
 
 func ParseMultisigScript(code []byte) ([][]byte, error) {
