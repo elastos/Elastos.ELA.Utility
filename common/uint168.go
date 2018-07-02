@@ -83,6 +83,10 @@ func Uint168FromBytes(bytes []byte) (*Uint168, error) {
 }
 
 func Uint168FromAddress(address string) (*Uint168, error) {
+	if len(address) != 34 {
+		return nil, errors.New("[Uint168FromAddress] error, len != 34")
+	}
+
 	decoded, err := base58.BitcoinEncoding.Decode([]byte(address))
 	if err != nil {
 		return nil, err
