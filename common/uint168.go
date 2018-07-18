@@ -14,10 +14,12 @@ const (
 	UINT168SIZE = 21
 	// Address types
 	STANDARD   = 0xAC
+	REGISTERID = 0xAD
 	MULTISIG   = 0xAE
 	CROSSCHAIN = 0xAF
 
 	PrefixStandard   = 0x21
+	PrefixRegisterId = 0x67
 	PrefixMultisig   = 0x12
 	PrefixCrossChain = 0x4B
 )

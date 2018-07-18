@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"errors"
-	. "github.com/elastos/Elastos.ELA.Utility/common"
 
+	. "github.com/elastos/Elastos.ELA.Utility/common"
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -48,6 +48,8 @@ func ToProgramHash(code []byte) (*Uint168, error) {
 		return Uint168FromBytes(sum168(PrefixMultisig, code))
 	case CROSSCHAIN:
 		return Uint168FromBytes(sum168(PrefixCrossChain, code))
+	case REGISTERID:
+		return Uint168FromBytes(sum168(PrefixRegisterId, code))
 	default:
 		return nil, errors.New("[ToProgramHash] error, unknown script type")
 	}
