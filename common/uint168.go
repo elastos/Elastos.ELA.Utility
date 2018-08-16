@@ -13,6 +13,7 @@ import (
 const (
 	UINT168SIZE = 21
 	// Address types
+	SMARTCONTRACT = 0xAB
 	STANDARD   = 0xAC
 	REGISTERID = 0xAD
 	MULTISIG   = 0xAE
@@ -22,6 +23,7 @@ const (
 	PrefixRegisterId = 0x67
 	PrefixMultisig   = 0x12
 	PrefixCrossChain = 0x4B
+	PrefixSmartContract = 0x1C
 )
 
 type Uint168 [UINT168SIZE]uint8
