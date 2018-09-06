@@ -85,6 +85,11 @@ func (helper *MsgHelper) Write(msg Message) {
 		return
 	}
 
+	if helper.conn == nil {
+		helper.handler.OnError(fmt.Errorf("[MsgHelper] helper conn is nil"))
+		return
+	}
+
 	_, err = helper.conn.Write(append(hdr, buf.Bytes()...))
 	if err != nil {
 		helper.handler.OnError(ErrDisconnected)
