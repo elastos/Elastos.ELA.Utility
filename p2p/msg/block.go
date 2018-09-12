@@ -9,6 +9,8 @@ import (
 
 const MaxBlockSize = 8000000
 
+const MaxTxPerBlock = 100000
+
 type Block struct {
 	Block common.Serializable
 }

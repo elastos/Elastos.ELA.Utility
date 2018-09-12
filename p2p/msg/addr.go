@@ -2,6 +2,7 @@ package msg
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 
 	"github.com/elastos/Elastos.ELA.Utility/common"
@@ -38,6 +39,20 @@ func (msg *Addr) Deserialize(reader io.Reader) error {
 		return err
 	}
 
-	msg.AddrList = make([]p2p.NetAddress, count)
-	return binary.Read(reader, binary.LittleEndian, &msg.AddrList)
+	if count > MaxAddrPerMsg {
+		return fmt.Errorf("Addr.Deserialize too many addresses"+
+			" for message [count %v, max %v]", count, MaxAddrPerMsg)
+	}
+
+	msg.AddrList = make([]p2p.NetAddress, 0, count)
+	for i := uint64(0); i < count; i++ {
+		var addr p2p.NetAddress
+		err := binary.Read(reader, binary.LittleEndian, &addr)
+		if err != nil {
+			return err
+		}
+		msg.AddrList = append(msg.AddrList, addr)
+	}
+
+	return nil
 }

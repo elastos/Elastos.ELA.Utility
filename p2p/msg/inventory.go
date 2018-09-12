@@ -24,7 +24,7 @@ func NewInventory() *Inventory {
 // AddInvVect adds an inventory vector to the message.
 func (msg *Inventory) AddInvVect(iv *InvVect) error {
 	if len(msg.InvList)+1 > MaxInvPerMsg {
-		return fmt.Errorf("GetData.AddInvVect too many invvect in message [max %v]", MaxInvPerMsg)
+		return fmt.Errorf("AddInvVect too many invvect in message [max %v]", MaxInvPerMsg)
 	}
 
 	msg.InvList = append(msg.InvList, iv)
@@ -57,6 +57,10 @@ func (msg *Inventory) Deserialize(reader io.Reader) error {
 	count, err := common.ReadUint32(reader)
 	if err != nil {
 		return err
+	}
+	// Limit to max inventory vectors per message.
+	if count > MaxInvPerMsg {
+		return fmt.Errorf("too many invvect in message [%v]", count)
 	}
 
 	msg.InvList = make([]*InvVect, 0, count)

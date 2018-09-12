@@ -1,6 +1,7 @@
 package v0
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/elastos/Elastos.ELA.Utility/common"
@@ -34,7 +35,19 @@ func (msg *Inv) Deserialize(r io.Reader) error {
 	if err != nil {
 		return err
 	}
+	// Limit to max inventory vectors per message.
+	if count > MaxInvPerMsg {
+		return fmt.Errorf("too many invvect in message [%v]", count)
+	}
 
-	msg.Hashes = make([]*common.Uint256, count)
-	return common.ReadElement(r, &msg.Hashes)
+	msg.Hashes = make([]*common.Uint256, 0, count)
+	for i := uint32(0); i < count; i++ {
+		var hash common.Uint256
+		if err := hash.Deserialize(r); err != nil {
+			return err
+		}
+		msg.Hashes = append(msg.Hashes, &hash)
+	}
+
+	return nil
 }

@@ -1,9 +1,10 @@
 package msg
 
 import (
+	"fmt"
 	"io"
 
-	. "github.com/elastos/Elastos.ELA.Utility/common"
+	"github.com/elastos/Elastos.ELA.Utility/common"
 	"github.com/elastos/Elastos.ELA.Utility/p2p"
 )
 
@@ -12,11 +13,11 @@ import (
 const MaxBlockLocatorsPerMsg = 500
 
 type GetBlocks struct {
-	Locator  []*Uint256
-	HashStop Uint256
+	Locator  []*common.Uint256
+	HashStop common.Uint256
 }
 
-func NewGetBlocks(locator []*Uint256, hashStop Uint256) *GetBlocks {
+func NewGetBlocks(locator []*common.Uint256, hashStop common.Uint256) *GetBlocks {
 	msg := new(GetBlocks)
 	msg.Locator = locator
 	msg.HashStop = hashStop
@@ -28,19 +29,31 @@ func (msg *GetBlocks) CMD() string {
 }
 
 func (msg *GetBlocks) MaxLength() uint32 {
-	return 4 + (MaxBlockLocatorsPerMsg * UINT256SIZE) + UINT256SIZE
+	return 4 + (MaxBlockLocatorsPerMsg * common.UINT256SIZE) + common.UINT256SIZE
 }
 
 func (msg *GetBlocks) Serialize(writer io.Writer) error {
-	return WriteElements(writer, uint32(len(msg.Locator)), msg.Locator, msg.HashStop)
+	return common.WriteElements(writer, uint32(len(msg.Locator)), msg.Locator, msg.HashStop)
 }
 
 func (msg *GetBlocks) Deserialize(reader io.Reader) error {
-	count, err := ReadUint32(reader)
+	count, err := common.ReadUint32(reader)
 	if err != nil {
 		return err
 	}
+	if count > MaxBlockLocatorsPerMsg {
+		return fmt.Errorf("GetBlocks.Deserialize too many block locator"+
+			" hashes for message [count %v, max %v]", count, MaxBlockLocatorsPerMsg)
+	}
 
-	msg.Locator = make([]*Uint256, count)
-	return ReadElements(reader, &msg.Locator, &msg.HashStop)
+	msg.Locator = make([]*common.Uint256, 0, count)
+	for i := uint32(0); i < count; i++ {
+		var hash common.Uint256
+		if err := hash.Deserialize(reader); err != nil {
+			return err
+		}
+		msg.Locator = append(msg.Locator, &hash)
+	}
+
+	return msg.HashStop.Deserialize(reader)
 }
