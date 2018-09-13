@@ -50,6 +50,8 @@ func ToProgramHash(code []byte) (*Uint168, error) {
 		return Uint168FromBytes(sum168(PrefixCrossChain, code))
 	case REGISTERID:
 		return Uint168FromBytes(sum168(PrefixRegisterId, code))
+	case SMARTCONTRACT:
+		return Uint168FromBytes(sum168(PrefixSmartContract, code))
 	default:
 		return nil, errors.New("[ToProgramHash] error, unknown script type")
 	}
@@ -140,7 +142,8 @@ func parsePublicKeys(code []byte) ([][]byte, error) {
 }
 
 func GetScriptType(script []byte) (byte, error) {
-	if len(script) != PublicKeyScriptLength && len(script) < MinMultiSignCodeLength {
+	scryptType := script[len(script)-1]
+	if len(script) != PublicKeyScriptLength && len(script) < MinMultiSignCodeLength && scryptType != SMARTCONTRACT {
 		return 0, errors.New("invalid transaction type, redeem script not a standard or multi sign type")
 	}
 	return script[len(script)-1], nil
@@ -220,6 +223,9 @@ func GetSignStatus(code, param []byte) (haveSign, needSign int, err error) {
 		haveSign = len(param) / SignatureScriptLength
 
 		return haveSign, int(getM(code)), nil
+	} else if scriptType == SMARTCONTRACT {
+		signed := len(param)
+		return signed, 1, nil
 	}
 
 	return -1, -1, errors.New("invalid redeem script type")
