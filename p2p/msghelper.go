@@ -69,12 +69,12 @@ func (helper *MsgHelper) Write(msg Message) {
 	buf := new(bytes.Buffer)
 	err := msg.Serialize(buf)
 	if err != nil {
-		helper.handler.OnError(fmt.Errorf("[MsgHelper] serialize message failed %s", err.Error()))
+		helper.handler.OnError(fmt.Errorf("[P2P] serialize message failed %s", err.Error()))
 		return
 	}
 	hdr, err := BuildHeader(helper.magic, msg.CMD(), buf.Bytes()).Serialize()
 	if err != nil {
-		helper.handler.OnError(fmt.Errorf("[MsgHelper] serialize message header failed %s", err.Error()))
+		helper.handler.OnError(fmt.Errorf("[P2P] serialize message header failed %s", err.Error()))
 		return
 	}
 
@@ -149,26 +149,31 @@ func (helper *MsgHelper) unpack(buf []byte) {
 
 func (helper *MsgHelper) decode(buf []byte) {
 	if len(buf) < HeaderSize {
-		helper.handler.OnError(fmt.Errorf("[MsgHelper] message Length is not enough"))
+		helper.handler.OnError(fmt.Errorf("[P2P] message Length is not enough"))
 		return
 	}
 
 	hdr, err := verify(buf)
 	if err != nil {
-		helper.handler.OnError(fmt.Errorf("[MsgHelper] verify message header failed %s", err.Error()))
+		helper.handler.OnError(fmt.Errorf("[P2P] verify message header failed %s", err.Error()))
 		return
 	}
 
 	msg, err := helper.handler.OnMakeMessage(hdr.GetCMD())
 	if err != nil {
-		helper.handler.OnError(fmt.Errorf("[MsgHelper] make message failed %s", err.Error()))
+		helper.handler.OnError(fmt.Errorf("[P2P] make message failed %s", err.Error()))
+		return
+	}
+
+	if hdr.Length > msg.MaxLength() {
+		helper.handler.OnError(ErrMsgSizeExceeded)
 		return
 	}
 
 	err = msg.Deserialize(bytes.NewReader(buf[HeaderSize:]))
 	if err != nil {
 		helper.handler.OnError(
-			fmt.Errorf("[MsgHelper] deserialize message %s failed %s", msg.CMD(), err.Error()))
+			fmt.Errorf("[P2P] deserialize message %s failed %s", msg.CMD(), err.Error()))
 		return
 	}
 
