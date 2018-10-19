@@ -25,11 +25,15 @@ const (
 // Handler is the registered method to handle a http request.
 type Handler func(util.Params) (interface{}, error)
 
-// error is the error data for the JSON-RPC request.
-type resperr struct {
+// Error is the error data for the JSON-RPC request.
+type Error struct {
 	Id      uint32 `json:"id,omitempty"`
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+}
+
+func (e Error) Error() string {
+	return e.Message
 }
 
 // request represent the standard JSON-RPC request data structure.
@@ -45,12 +49,12 @@ type response struct {
 	Id      uint32      `json:"id,omitempty"`
 	Version string      `json:"jsonrpc,omitempty"`
 	Result  interface{} `json:"result,omitempty"`
-	Error   *resperr    `json:"error,omitempty"`
+	Error   *Error      `json:"error,omitempty"`
 }
 
 // error returns an error response to the http client.
 func (r *response) error(w http.ResponseWriter, httpStatus, code int, message string) {
-	r.Error = &resperr{
+	r.Error = &Error{
 		Code:    code,
 		Message: message,
 	}
