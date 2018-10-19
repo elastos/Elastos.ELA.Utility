@@ -180,7 +180,9 @@ func (sp *serverPeer) pushAddrMsg(addresses []*p2p.NetAddress) {
 // the communications.
 func (sp *serverPeer) OnVersion(_ *peer.Peer, v *msg.Version) {
 	// Signal the new peer.
-	sp.server.cfg.OnNewPeer(sp)
+	if sp.server.cfg.OnNewPeer != nil {
+		sp.server.cfg.OnNewPeer(sp)
+	}
 
 	// Update the address manager and request known addresses from the
 	// remote peer for outbound connections.  This is skipped when running
@@ -704,7 +706,7 @@ func (s *server) peerDoneHandler(sp *serverPeer) {
 	s.donePeers <- sp
 
 	// Only tell sync manager we are gone if we ever told it we existed.
-	if sp.VersionKnown() {
+	if sp.VersionKnown() && s.cfg.OnDonePeer != nil {
 		s.cfg.OnDonePeer(sp)
 	}
 	close(sp.quit)

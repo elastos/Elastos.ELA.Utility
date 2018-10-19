@@ -157,7 +157,7 @@ type Peer struct {
 	lastPingMicros int64     // Time for last ping to return.
 
 	sendQueue     chan outMsg
-	sendDoneQueue chan struct{}
+	sendDoneQueue chan<- struct{}
 	inQuit        chan struct{}
 	outQuit       chan struct{}
 	quit          chan struct{}
@@ -660,17 +660,17 @@ out:
 			if smsg.doneChan != nil {
 				smsg.doneChan <- struct{}{}
 			}
-			p.sendDoneQueue <- struct{}{}
+			if p.sendDoneQueue != nil {
+				p.sendDoneQueue <- struct{}{}
+			}
 
 		case <-p.quit:
 			break out
 		}
 	}
-}
 
-// Drain any wait channels before we go away so we don't leave something
-// waiting for us.
-func (p *Peer) CleanupSendQueue() {
+	// Drain any wait channels before going away so there is nothing left
+	// waiting on this goroutine.
 cleanup:
 	for {
 		select {
@@ -720,8 +720,8 @@ func (p *Peer) SendMessage(msg p2p.Message, doneChan chan<- struct{}) {
 	p.sendQueue <- outMsg{msg: msg, doneChan: doneChan}
 }
 
-func (p *Peer) SendDoneQueue() <-chan struct{} {
-	return p.sendDoneQueue
+func (p *Peer) OnSendDone(sendDoneChan chan<- struct{}) {
+	p.sendDoneQueue = sendDoneChan
 }
 
 // Connected returns whether or not the peer is currently connected.
@@ -959,8 +959,7 @@ func newPeerBase(origCfg *Config, inbound bool) *Peer {
 
 	p := Peer{
 		inbound:         inbound,
-		sendQueue:       make(chan outMsg, 1),   // nonblocking sync
-		sendDoneQueue:   make(chan struct{}, 1), // nonblocking sync
+		sendQueue:       make(chan outMsg, 1), // nonblocking sync
 		inQuit:          make(chan struct{}),
 		outQuit:         make(chan struct{}),
 		quit:            make(chan struct{}),
