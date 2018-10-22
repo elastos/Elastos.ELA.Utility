@@ -3,11 +3,13 @@ package restful
 import (
 	"bytes"
 	"fmt"
-	"github.com/elastos/Elastos.ELA.Utility/http/util"
-	"github.com/stretchr/testify/assert"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/elastos/Elastos.ELA.Utility/http/util"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRestfulServer(t *testing.T) {
@@ -210,12 +212,63 @@ func TestServer_ServeHTTP(t *testing.T) {
 	}
 
 	// not found
-	resp, err := http.Get( "http://127.0.0.1:20336/api/notfound")
+	resp, err := http.Get("http://127.0.0.1:20336/api/notfound")
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
 	if resp.StatusCode != http.StatusNotFound {
 		t.Error("expecting not found get %", resp.Status)
+	}
+
+	err = s.RegisterGetAction("/api/get", func(params util.Params) (interface{}, error) {
+		t.Logf("GET request from path %s", "/api/get")
+		return nil, nil
+	})
+	assert.NoError(t, err)
+
+	err = s.RegisterPutAction("/api/put", func(params util.Params) (interface{}, error) {
+		t.Logf("PUT request from path %s", "/api/put")
+		return nil, nil
+	})
+	assert.NoError(t, err)
+
+	err = s.RegisterPatchAction("/api/patch", func(params util.Params) (interface{}, error) {
+		t.Logf("PATCH request from path %s", "/api/patch")
+		return nil, nil
+	})
+	assert.NoError(t, err)
+
+	err = s.RegisterDeleteAction("/api/delete", func(params util.Params) (interface{}, error) {
+		t.Logf("DELETE request from path %s", "/api/delete")
+		return nil, nil
+	})
+	assert.NoError(t, err)
+
+	err = s.RegisterPostAction("/api/post", func(data []byte) (interface{}, error) {
+		t.Logf("POST request from path %s, data %s", "/api/post", data)
+		if !bytes.Equal(data, []byte("data")) {
+			t.Errorf("expected data = data get %s", data)
+		}
+		return nil, nil
+	})
+	assert.NoError(t, err)
+
+	for _, method := range methods {
+		req, err := http.NewRequest(method, fmt.Sprintf("http://127.0.0.1:20336/api/%s",
+			strings.ToLower(method)), nil)
+		if !assert.NoError(t, err) {
+			t.FailNow()
+		}
+		_, err = http.DefaultClient.Do(req)
+		if !assert.NoError(t, err) {
+			t.FailNow()
+		}
+	}
+
+	_, err = http.Post("http://127.0.0.1:20336/api/post", "text/plain",
+		bytes.NewReader([]byte("data")))
+	if !assert.NoError(t, err) {
+		t.FailNow()
 	}
 
 	select {
@@ -224,10 +277,9 @@ func TestServer_ServeHTTP(t *testing.T) {
 	}
 }
 
-
 func TestServer_ServeHTTP_Path(t *testing.T) {
 	s := NewServer(&Config{
-		Path:"/api/",
+		Path:      "/api/",
 		ServePort: 20336,
 	})
 
@@ -370,7 +422,7 @@ func TestServer_ServeHTTP_Path(t *testing.T) {
 	}
 
 	// not found
-	resp, err := http.Get( "http://127.0.0.1:20336/api/notfound")
+	resp, err := http.Get("http://127.0.0.1:20336/api/notfound")
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}

@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 	"strings"
+
+	"github.com/elastos/Elastos.ELA.Utility/http/util"
 )
 
 // response represent the default RESTful response data structure.
@@ -54,6 +56,31 @@ func (s *Server) response(w http.ResponseWriter, result interface{}, err error) 
 		return
 	}
 	s.write(w, data)
+}
+
+// RegisterGetAction register a RESTful handler with the given url.
+func (s *Server) RegisterGetAction(url string, handler func(util.Params) (interface{}, error)) error {
+	return s.RegisterAction(http.MethodGet, url, handler)
+}
+
+// RegisterPostAction register a RESTful handler with the given url.
+func (s *Server) RegisterPostAction(url string, handler func([]byte) (interface{}, error)) error {
+	return s.RegisterAction(http.MethodPost, url, handler)
+}
+
+// RegisterPutAction register a RESTful handler with the given url.
+func (s *Server) RegisterPutAction(url string, handler func(util.Params) (interface{}, error)) error {
+	return s.RegisterAction(http.MethodPut, url, handler)
+}
+
+// RegisterPatchAction register a RESTful handler with the given url.
+func (s *Server) RegisterPatchAction(url string, handler func(util.Params) (interface{}, error)) error {
+	return s.RegisterAction(http.MethodPatch, url, handler)
+}
+
+// RegisterDeleteAction register a RESTful handler with the given url.
+func (s *Server) RegisterDeleteAction(url string, handler func(util.Params) (interface{}, error)) error {
+	return s.RegisterAction(http.MethodDelete, url, handler)
 }
 
 // RegisterAction register a RESTful handler with the given url and method. For
