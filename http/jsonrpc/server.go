@@ -217,7 +217,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // NewServer creates and return a JSON-RPC server instance.
 func NewServer(cfg *Config) *Server {
-	return &Server{cfg: *cfg}
+	return &Server{
+		cfg:       *cfg,
+		paramsMap: make(map[string][]string),
+		handlers:  make(map[string]Handler),
+	}
 }
 
 func min(a int, b int) int {
