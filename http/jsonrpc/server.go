@@ -36,16 +36,16 @@ func (e Error) Error() string {
 	return e.Message
 }
 
-// request represent the standard JSON-RPC request data structure.
-type request struct {
+// Request represent the standard JSON-RPC request data structure.
+type Request struct {
 	Id      uint32      `json:"id,omitempty"`
 	Version string      `json:"jsonrpc,omitempty"`
 	Method  string      `json:"method"`
 	Params  interface{} `json:"params"`
 }
 
-// response represent the standard JSON-RPC response data structure.
-type response struct {
+// Response represent the standard JSON-RPC Response data structure.
+type Response struct {
 	Id      uint32      `json:"id,omitempty"`
 	Version string      `json:"jsonrpc,omitempty"`
 	Result  interface{} `json:"result,omitempty"`
@@ -53,7 +53,7 @@ type response struct {
 }
 
 // error returns an error response to the http client.
-func (r *response) error(w http.ResponseWriter, httpStatus, code int, message string) {
+func (r *Response) error(w http.ResponseWriter, httpStatus, code int, message string) {
 	r.Error = &Error{
 		Code:    code,
 		Message: message,
@@ -62,7 +62,7 @@ func (r *response) error(w http.ResponseWriter, httpStatus, code int, message st
 }
 
 // write returns a normal response to the http client.
-func (r *response) write(w http.ResponseWriter, httpStatus int) {
+func (r *Response) write(w http.ResponseWriter, httpStatus int) {
 	w.Header().Add("Content-Type", "application/json")
 	w.Header().Add("Content-Type", "charset=utf-8")
 	w.WriteHeader(httpStatus)
@@ -161,8 +161,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	//read the body of the request
 	body, _ := ioutil.ReadAll(r.Body)
-	var req request
-	var resp response
+	var req Request
+	var resp Response
 	err := json.Unmarshal(body, &req)
 	if err != nil {
 		log.Warn("HTTP JSON RPC Handle - json.Unmarshal: ", err)
