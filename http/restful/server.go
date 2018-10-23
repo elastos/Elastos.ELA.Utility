@@ -34,7 +34,8 @@ type Server struct {
 
 func (s *Server) write(w http.ResponseWriter, data []byte) {
 	w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Add("content-type", "application/json;charset=utf-8")
+	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add("Content-Type", "charset=utf-8")
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.Write(data)
 }
@@ -148,8 +149,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 			}
 
-			// break when handler finished.
-			break
+			// return when handler finished.
+			return
 		}
 	}
 
