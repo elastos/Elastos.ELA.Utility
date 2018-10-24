@@ -11,11 +11,11 @@ import (
 	"github.com/elastos/Elastos.ELA.Utility/http/util"
 )
 
-// response represent the default RESTful response data structure.
-type response struct {
-	Result interface{} `json:"Result,omitempty"`
-	Error  int         `json:"Error,omitempty"`
-	Desc   string      `json:"Desc,omitempty"`
+// Response represent the default RESTful Response data structure.
+type Response struct {
+	Result interface{}
+	Error  int
+	Desc   string
 }
 
 // Config is the configuration of the RESTful server.
@@ -33,17 +33,17 @@ type Server struct {
 }
 
 func (s *Server) write(w http.ResponseWriter, data []byte) {
-	w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Add("Content-Type", "application/json")
-	w.Header().Add("Content-Type", "charset=utf-8")
-	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write(data)
 }
 
 func (s *Server) response(w http.ResponseWriter, result interface{}, err error) {
-	resp := response{
+	resp := Response{
 		Result: result,
-		Error:  http.StatusOK,
+		Error:  0,
+		Desc:   "Success",
 	}
 
 	if err != nil {

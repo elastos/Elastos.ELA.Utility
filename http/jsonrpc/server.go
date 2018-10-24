@@ -63,8 +63,7 @@ func (r *Response) error(w http.ResponseWriter, httpStatus, code int, message st
 
 // write returns a normal response to the http client.
 func (r *Response) write(w http.ResponseWriter, httpStatus int) {
-	w.Header().Add("Content-Type", "application/json")
-	w.Header().Add("Content-Type", "charset=utf-8")
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.WriteHeader(httpStatus)
 	data, _ := json.Marshal(r)
 	w.Write(data)
