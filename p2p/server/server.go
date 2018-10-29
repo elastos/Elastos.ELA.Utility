@@ -1115,6 +1115,7 @@ func (s *server) PersistentPeers() []IPeer {
 // Use start to begin accepting connections from peers.
 func newServer(origCfg *Config) (*server, error) {
 	cfg := *origCfg // Copy to avoid mutating caller.
+	cfg.normalize()
 
 	amgr := addrmgr.New("./data/")
 

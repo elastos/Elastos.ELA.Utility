@@ -2,6 +2,7 @@ package server
 
 import (
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/elastos/Elastos.ELA.Utility/p2p"
@@ -38,6 +39,18 @@ type Config struct {
 	BestHeight       func() uint64
 }
 
+func (cfg *Config) normalize() {
+	defaultPort := strconv.FormatUint(uint64(cfg.DefaultPort), 10)
+
+	// Add default port to all seed peer addresses if needed and remove
+	// duplicate addresses.
+	cfg.SeedPeers = normalizeAddresses(cfg.SeedPeers, defaultPort)
+
+	// Add default port to all listener addresses if needed and remove
+	// duplicate addresses.
+	cfg.ListenAddrs = normalizeAddresses(cfg.ListenAddrs, defaultPort)
+}
+
 // inWhitelist returns whether the IP address is included in the whitelisted
 // networks and IPs.
 func (cfg *Config) inWhitelist(addr net.Addr) bool {
@@ -66,6 +79,40 @@ func (cfg *Config) inWhitelist(addr net.Addr) bool {
 
 func dialTimeout(addr net.Addr) (net.Conn, error) {
 	return net.DialTimeout(addr.Network(), addr.String(), defaultConnectTimeout)
+}
+
+// removeDuplicateAddresses returns a new slice with all duplicate entries in
+// addrs removed.
+func removeDuplicateAddresses(addrs []string) []string {
+	result := make([]string, 0, len(addrs))
+	seen := map[string]struct{}{}
+	for _, val := range addrs {
+		if _, ok := seen[val]; !ok {
+			result = append(result, val)
+			seen[val] = struct{}{}
+		}
+	}
+	return result
+}
+
+// normalizeAddress returns addr with the passed default port appended if
+// there is not already a port specified.
+func normalizeAddress(addr, defaultPort string) string {
+	_, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return net.JoinHostPort(addr, defaultPort)
+	}
+	return addr
+}
+
+// normalizeAddresses returns a new slice with all the passed peer addresses
+// normalized with the given default port, and all duplicates removed.
+func normalizeAddresses(addrs []string, defaultPort string) []string {
+	for i, addr := range addrs {
+		addrs[i] = normalizeAddress(addr, defaultPort)
+	}
+
+	return removeDuplicateAddresses(addrs)
 }
 
 // NewDefaultConfig returns a new config instance filled by default settings
