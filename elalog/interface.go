@@ -4,10 +4,6 @@ package elalog
 // implementation of Logger is implemented by this package and can be created
 // by calling (*Backend).Logger.
 type Logger interface {
-	// Tracef formats message according to format specifier and writes to
-	// to log with LevelTrace.
-	Tracef(format string, params ...interface{})
-
 	// Debugf formats message according to format specifier and writes to
 	// log with LevelDebug.
 	Debugf(format string, params ...interface{})
@@ -27,10 +23,6 @@ type Logger interface {
 	// Fatalf formats message according to format specifier and writes to
 	// log with LevelFatal.
 	Fatalf(format string, params ...interface{})
-
-	// Trace formats message using the default formats for its operands
-	// and writes to log with LevelTrace.
-	Trace(v ...interface{})
 
 	// Debug formats message using the default formats for its operands
 	// and writes to log with LevelDebug.

@@ -722,8 +722,6 @@ func (s *server) peerHandler() {
 	// start and stop them in this handler.
 	s.addrManager.Start()
 
-	log.Tracef("Starting peer handler")
-
 	state := &peerState{
 		inboundPeers:    make(map[uint64]*serverPeer),
 		persistentPeers: make(map[uint64]*serverPeer),
@@ -760,7 +758,6 @@ out:
 		case <-s.quit:
 			// Disconnect all peers on server shutdown.
 			state.forAllPeers(func(sp *serverPeer) {
-				log.Tracef("Shutdown peer %s", sp)
 				sp.Disconnect()
 			})
 			break out
@@ -784,7 +781,6 @@ cleanup:
 		}
 	}
 	s.wg.Done()
-	log.Tracef("Peer handler done")
 }
 
 // AddPeer adds a new peer that has already been connected to the server.
@@ -829,8 +825,6 @@ func (s *server) Start() {
 	if atomic.AddInt32(&s.started, 1) != 1 {
 		return
 	}
-
-	log.Trace("Starting server")
 
 	// server startup time. Used for the uptime command for uptime calculation.
 	s.startupTime = time.Now().Unix()
@@ -1117,7 +1111,7 @@ func newServer(origCfg *Config) (*server, error) {
 	cfg := *origCfg // Copy to avoid mutating caller.
 	cfg.normalize()
 
-	amgr := addrmgr.New("./data/")
+	amgr := addrmgr.New("data")
 
 	var listeners []net.Listener
 	var nat NAT

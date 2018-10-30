@@ -347,7 +347,6 @@ out:
 	}
 
 	cm.wg.Done()
-	log.Trace("Connection handler done")
 }
 
 // NewConnReq creates a new connection request and connects to the
@@ -489,7 +488,6 @@ func (cm *ConnManager) listenHandler(listener net.Listener) {
 	}
 
 	cm.wg.Done()
-	log.Tracef("Listener handler done for %s", listener.Addr())
 }
 
 // Start launches the connection manager and begins connecting to the network.
@@ -499,7 +497,6 @@ func (cm *ConnManager) Start() {
 		return
 	}
 
-	log.Trace("Connection manager started")
 	cm.wg.Add(1)
 	go cm.connHandler()
 
@@ -538,7 +535,6 @@ func (cm *ConnManager) Stop() {
 	}
 
 	close(cm.quit)
-	log.Trace("Connection manager stopped")
 }
 
 // New returns a new connection manager.

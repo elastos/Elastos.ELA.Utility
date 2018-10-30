@@ -181,7 +181,6 @@ func (p *Peer) String() string {
 // This function is safe for concurrent access.
 func (p *Peer) UpdateHeight(newHeight uint32) {
 	p.statsMtx.Lock()
-	log.Tracef("Updating height of peer %v from %v to %v", p.addr, p.height, newHeight)
 	p.height = newHeight
 	p.statsMtx.Unlock()
 }
@@ -485,6 +484,10 @@ func (p *Peer) readMessage() (p2p.Message, error) {
 	// Use closures to log expensive operations so they are only run when
 	// the logging level requires it.
 	log.Debugf("%v", newLogClosure(func() string {
+		if err != nil {
+			return fmt.Sprintf("Read message failed, %s", err)
+		}
+
 		// Debug summary of message.
 		summary := messageSummary(msg)
 		if len(summary) > 0 {
@@ -685,7 +688,6 @@ cleanup:
 		}
 	}
 	close(p.outQuit)
-	log.Tracef("Peer output handler done for %s", p)
 }
 
 // pingHandler periodically pings the peer.  It must be run as a goroutine.
@@ -740,7 +742,6 @@ func (p *Peer) Disconnect() {
 		return
 	}
 
-	log.Tracef("Disconnecting %s", p)
 	if atomic.LoadInt32(&p.connected) != 0 {
 		p.conn.Close()
 	}
@@ -877,8 +878,6 @@ func (p *Peer) negotiateOutboundProtocol() error {
 
 // start begins processing input and output messages.
 func (p *Peer) start() error {
-	log.Tracef("Starting peer %s", p)
-
 	negotiateErr := make(chan error, 1)
 	go func() {
 		if p.inbound {

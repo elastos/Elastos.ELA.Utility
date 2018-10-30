@@ -30,8 +30,7 @@ type Level uint32
 
 // Level constants.
 const (
-	LevelTrace Level = iota
-	LevelDebug
+	LevelDebug Level = iota
 	LevelInfo
 	LevelWarn
 	LevelError
@@ -40,15 +39,13 @@ const (
 )
 
 // levelStrs defines the human-readable names for each logging level.
-var levelStrs = [...]string{"TRC", "DBG", "INF", "WRN", "ERR", "FAT", "OFF"}
+var levelStrs = [...]string{"DBG", "INF", "WRN", "ERR", "FAT", "OFF"}
 
 // LevelFromString returns a level based on the input string s.  If the input
 // can't be interpreted as a valid log level, the info level and false is
 // returned.
 func LevelFromString(s string) (l Level, ok bool) {
 	switch strings.ToLower(s) {
-	case "trace", "trc":
-		return LevelTrace, true
 	case "debug", "dbg":
 		return LevelDebug, true
 	case "info", "inf":
@@ -264,28 +261,6 @@ type slog struct {
 	b   *Backend
 }
 
-// Trace formats message using the default formats for its operands, prepends
-// the prefix as necessary, and writes to log with LevelTrace.
-//
-// This is part of the Logger interface implementation.
-func (l *slog) Trace(args ...interface{}) {
-	lvl := l.Level()
-	if lvl <= LevelTrace {
-		l.b.print("TRC", l.tag, args...)
-	}
-}
-
-// Tracef formats message according to format specifier, prepends the prefix as
-// necessary, and writes to log with LevelTrace.
-//
-// This is part of the Logger interface implementation.
-func (l *slog) Tracef(format string, args ...interface{}) {
-	lvl := l.Level()
-	if lvl <= LevelTrace {
-		l.b.printf("TRC", l.tag, format, args...)
-	}
-}
-
 // Debug formats message using the default formats for its operands, prepends
 // the prefix as necessary, and writes to log with LevelDebug.
 //
@@ -373,7 +348,6 @@ func (l *slog) Errorf(format string, args ...interface{}) {
 		l.b.printf("ERR", l.tag, format, args...)
 	}
 }
-
 
 // Fatal formats message using the default formats for its operands, prepends
 // the prefix as necessary, and writes to log with LevelFatal.

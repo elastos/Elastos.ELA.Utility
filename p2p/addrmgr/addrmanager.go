@@ -216,16 +216,12 @@ func (a *AddrManager) updateAddress(netAddr, srcAddr *p2p.NetAddress) {
 
 	// Enforce max addresses.
 	if len(a.addrNew[bucket]) > newBucketSize {
-		log.Tracef("new bucket is full, expiring old")
 		a.expireNew(bucket)
 	}
 
 	// Add to new bucket.
 	ka.refs++
 	a.addrNew[bucket][addr] = ka
-
-	log.Tracef("Added new address %s for a total of %d addresses", addr,
-		a.nTried+a.nNew)
 }
 
 // expireNew makes space in the new buckets by expiring the really bad entries.
@@ -239,7 +235,6 @@ func (a *AddrManager) expireNew(bucket int) {
 	var oldest *KnownAddress
 	for k, v := range a.addrNew[bucket] {
 		if v.isBad() {
-			log.Tracef("expiring bad address %v", k)
 			delete(a.addrNew[bucket], k)
 			v.refs--
 			if v.refs == 0 {
@@ -257,7 +252,6 @@ func (a *AddrManager) expireNew(bucket int) {
 
 	if oldest != nil {
 		key := NetAddressKey(oldest.na)
-		log.Tracef("expiring oldest address %v", key)
 
 		delete(a.addrNew[bucket], key)
 		oldest.refs--
@@ -339,7 +333,6 @@ out:
 	}
 	a.savePeers()
 	a.wg.Done()
-	log.Trace("Address handler done")
 }
 
 // savePeers saves all the known addresses to a file so they can be read back
@@ -530,8 +523,6 @@ func (a *AddrManager) Start() {
 	if atomic.AddInt32(&a.started, 1) != 1 {
 		return
 	}
-
-	log.Trace("Starting address manager")
 
 	// Load peers we already know about from file.
 	a.loadPeers()
@@ -757,8 +748,6 @@ func (a *AddrManager) GetAddress() *KnownAddress {
 			ka := e.Value.(*KnownAddress)
 			randval := a.rand.Intn(large)
 			if float64(randval) < (factor * ka.chance() * float64(large)) {
-				log.Tracef("Selected %s from tried bucket",
-					NetAddressKey(ka.na))
 				return ka
 			}
 			factor *= 1.2
@@ -785,8 +774,6 @@ func (a *AddrManager) GetAddress() *KnownAddress {
 			}
 			randval := a.rand.Intn(large)
 			if float64(randval) < (factor * ka.chance() * float64(large)) {
-				log.Tracef("Selected %s from new bucket",
-					NetAddressKey(ka.na))
 				return ka
 			}
 			factor *= 1.2
@@ -921,7 +908,6 @@ func (a *AddrManager) Good(addr *p2p.NetAddress) {
 	a.nNew++
 
 	rmkey := NetAddressKey(rmka.na)
-	log.Tracef("Replacing %s with %s in tried", rmkey, addrKey)
 
 	// We made sure there is space here just above.
 	a.addrNew[newBucket][rmkey] = rmka
