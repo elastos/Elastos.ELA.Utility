@@ -27,7 +27,7 @@ type Handler func(util.Params) (interface{}, error)
 
 // Error is the error data for the JSON-RPC request.
 type Error struct {
-	Id      uint32 `json:"id,omitempty"`
+	Id      uint32 `json:"id"`
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
@@ -46,10 +46,10 @@ type Request struct {
 
 // Response represent the standard JSON-RPC Response data structure.
 type Response struct {
-	Id      uint32      `json:"id,omitempty"`
-	Version string      `json:"jsonrpc,omitempty"`
-	Result  interface{} `json:"result,omitempty"`
-	Error   *Error      `json:"error,omitempty"`
+	Id      uint32      `json:"id"`
+	Version string      `json:"jsonrpc"`
+	Result  interface{} `json:"result"`
+	Error   *Error      `json:"error"`
 }
 
 // error returns an error response to the http client.
