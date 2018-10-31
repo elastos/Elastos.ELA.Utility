@@ -25,21 +25,10 @@ const (
 // Handler is the registered method to handle a http request.
 type Handler func(util.Params) (interface{}, error)
 
-// Error is the error data for the JSON-RPC request.
-type Error struct {
-	Id      uint32 `json:"id"`
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-}
-
-func (e Error) Error() string {
-	return e.Message
-}
-
 // Request represent the standard JSON-RPC request data structure.
 type Request struct {
-	Id      uint32      `json:"id,omitempty"`
-	Version string      `json:"jsonrpc,omitempty"`
+	Id      uint32      `json:"id"`
+	Version string      `json:"jsonrpc"`
 	Method  string      `json:"method"`
 	Params  interface{} `json:"params"`
 }
@@ -49,12 +38,12 @@ type Response struct {
 	Id      uint32      `json:"id"`
 	Version string      `json:"jsonrpc"`
 	Result  interface{} `json:"result"`
-	Error   *Error      `json:"error"`
+	Error   *util.Error `json:"error"`
 }
 
 // error returns an error response to the http client.
 func (r *Response) error(w http.ResponseWriter, httpStatus, code int, message string) {
-	r.Error = &Error{
+	r.Error = &util.Error{
 		Code:    code,
 		Message: message,
 	}
@@ -205,8 +194,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	result, err := handler(params)
 	if err != nil {
-		resp.error(w, http.StatusInternalServerError, InternalError,
-			"internal err: "+err.Error())
+		code := InternalError
+		message := fmt.Sprintf("internal error: %s", err)
+
+		switch e := err.(type) {
+		case *util.Error:
+			code = e.Code
+			message = e.Message
+		}
+
+		resp.error(w, http.StatusInternalServerError, code, message)
 		return
 	}
 

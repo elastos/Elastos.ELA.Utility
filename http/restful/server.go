@@ -40,16 +40,23 @@ func (s *Server) write(w http.ResponseWriter, data []byte) {
 }
 
 func (s *Server) response(w http.ResponseWriter, result interface{}, err error) {
-	resp := Response{
-		Result: result,
-		Error:  0,
-		Desc:   "Success",
-	}
+	resp := Response{Result: result}
 
+	code := 0
+	message := "Success"
 	if err != nil {
-		resp.Error = http.StatusInternalServerError
-		resp.Desc = err.Error()
+		switch e := err.(type) {
+		case *util.Error:
+			code = e.Code
+			message = e.Message
+
+		default:
+			code = http.StatusInternalServerError
+			message = err.Error()
+		}
 	}
+	resp.Error = code
+	resp.Desc = message
 
 	data, err := json.Marshal(resp)
 	if err != nil {
