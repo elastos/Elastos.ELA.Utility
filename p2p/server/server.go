@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -1111,7 +1112,12 @@ func newServer(origCfg *Config) (*server, error) {
 	cfg := *origCfg // Copy to avoid mutating caller.
 	cfg.normalize()
 
-	amgr := addrmgr.New("data")
+	dataDir := "./data"
+	_, err := os.Stat(dataDir)
+	if os.IsNotExist(err) {
+		os.MkdirAll(dataDir, os.ModePerm)
+	}
+	amgr := addrmgr.New(dataDir)
 
 	var listeners []net.Listener
 	var nat NAT
