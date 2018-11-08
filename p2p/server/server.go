@@ -1112,7 +1112,11 @@ func newServer(origCfg *Config) (*server, error) {
 	cfg := *origCfg // Copy to avoid mutating caller.
 	cfg.normalize()
 
-	dataDir := "./data"
+	// Create data dir for addrManager to store peer addresses.
+	dataDir := defaultDataDir
+	if len(cfg.DataDir) > 0 {
+		dataDir = cfg.DataDir
+	}
 	_, err := os.Stat(dataDir)
 	if os.IsNotExist(err) {
 		os.MkdirAll(dataDir, os.ModePerm)

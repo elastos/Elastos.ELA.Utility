@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	defaultDataDir               = "./data"
 	defaultMaxPeers              = 125
 	defaultBanThreshold   uint32 = 100
 	defaultBanDuration           = time.Hour * 24
@@ -17,26 +18,79 @@ const (
 
 // Config is a descriptor which specifies the server instance configuration.
 type Config struct {
-	MagicNumber      uint32
-	ProtocolVersion  uint32
-	Services         uint64
-	SeedPeers        []string
-	ListenAddrs      []string
-	ExternalIPs      []string
-	Upnp             bool
-	DefaultPort      uint16
-	DisableListen    bool
-	DisableRelayTx   bool
-	MaxPeers         int
-	DisableBanning   bool
-	BanThreshold     uint32
-	BanDuration      time.Duration
-	Whitelists       []*net.IPNet
-	TargetOutbound   int
-	OnNewPeer        func(IPeer)
-	OnDonePeer       func(IPeer)
+	// DataDir is the data path to store peer addresses etc.
+	DataDir string
+
+	// MagicNumber is the peer-to-peer network ID to connect to.
+	MagicNumber uint32
+
+	// ProtocolVersion represent the protocol version you are supporting.
+	ProtocolVersion uint32
+
+	// Services represent which services you are supporting.
+	Services uint64
+
+	// SeedPeers are the peers to connect with at startup.
+	SeedPeers []string
+
+	// ListenAddrs are the addresses listen on to accept peer connections.
+	ListenAddrs []string
+
+	// ExternalIPs are a list of local addresses we claim to listen on to peers.
+	ExternalIPs []string
+
+	// Use UPnP to map our listening port outside of NAT
+	Upnp bool
+
+	// DefaultPort defines the default peer-to-peer port for the network.
+	DefaultPort uint16
+
+	// Disable listening for incoming connections.
+	DisableListen bool
+
+	// DisableRelayTx specifies if the remote peer should be informed to
+	// not send inv messages for transactions.
+	DisableRelayTx bool
+
+	// Max number of inbound and outbound peers.
+	MaxPeers int
+
+	// Disable banning of misbehaving peers.
+	DisableBanning bool
+
+	// Maximum allowed ban score before disconnecting and banning misbehaving
+	// peers.
+	BanThreshold uint32
+
+	// How long to ban misbehaving peers.  Valid time units are {s, m, h}.
+	// Minimum 1 second
+	BanDuration time.Duration
+
+	// IP networks or IPs that will not be banned. (eg. 192.168.1.0/24 or ::1)
+	Whitelists []*net.IPNet
+
+	// TargetOutbound is the number of outbound network connections to maintain.
+	// Defaults to 8.
+	TargetOutbound int
+
+	// OnNewPeer will be invoked when a new peer connected.
+	OnNewPeer func(IPeer)
+
+	// OnDonePeer will be invoked when a peer disconnected.
+	OnDonePeer func(IPeer)
+
+	// MakeEmptyMessage will be invoked to creates a message of the appropriate
+	// concrete type based on the command.
 	MakeEmptyMessage func(string) (p2p.Message, error)
-	BestHeight       func() uint64
+
+	// BestHeight will be invoked to get current best height.
+	BestHeight func() uint64
+
+	// PingNonce will be invoked to get a nonce when sending a ping message.
+	PingNonce func() uint64
+
+	// PongNonce will be invoked to get a nonce when sending a ping message.
+	PongNonce func() uint64
 }
 
 func (cfg *Config) normalize() {
@@ -147,5 +201,7 @@ func NewDefaultConfig(
 		OnDonePeer:       onDonePeer,
 		MakeEmptyMessage: makeEmptyMessage,
 		BestHeight:       bestHeight,
+		PingNonce:        bestHeight,
+		PongNonce:        bestHeight,
 	}
 }
