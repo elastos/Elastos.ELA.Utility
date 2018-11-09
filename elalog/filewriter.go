@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
+	"path/filepath"
 	"sync/atomic"
 	"time"
 )
@@ -46,15 +46,15 @@ func (w *fileWriter) writeHandler() {
 		case buf := <-w.writeChan:
 			var bufLen = int64(len(buf))
 
-			// create new log file if current file is nil or reach max
-			// size.
-			if current == nil ||
-				atomic.AddInt64(&fileSize, bufLen) >= w.maxFileSize {
+			// create new log file if current file is nil or reach max size.
+			if atomic.AddInt64(&fileSize, bufLen) >= w.maxFileSize ||
+				current == nil {
 
 				// force create new log file
 				var err error
 				var file *os.File
 				for file, err = newLogFile(w.path); err != nil; {
+					fmt.Printf("New log file %s, err %v\n", w.path, err)
 					file, err = newLogFile(w.path)
 				}
 
@@ -70,7 +70,6 @@ func (w *fileWriter) writeHandler() {
 
 				current = file
 				atomic.StoreInt64(&fileSize, 0)
-
 			}
 
 			// force write buffer to file.
@@ -95,13 +94,12 @@ func (w *fileWriter) writeHandler() {
 				// Get the oldest log file
 				file := files[0]
 				// Remove it
-				os.Remove(w.path + file.Name())
-
-				total -= file.Size()
-
-				atomic.StoreInt64(&folderSize, total)
+				err := os.Remove(filepath.Join(w.path, file.Name()))
+				if err == nil {
+					total -= file.Size()
+					atomic.StoreInt64(&folderSize, total)
+				}
 			}
-
 		}
 	}
 }
@@ -113,7 +111,7 @@ func newLogFile(path string) (*os.File, error) {
 		}
 
 	} else if os.IsNotExist(err) {
-		if err := os.MkdirAll(path, 0766); err != nil {
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
 			return nil, err
 		}
 
@@ -121,16 +119,12 @@ func newLogFile(path string) (*os.File, error) {
 		return nil, err
 	}
 
-	return os.OpenFile(path+time.Now().Format("2006-01-02_15.04.05")+
-		".log", os.O_RDWR|os.O_CREATE, 0666)
+	return os.OpenFile(filepath.Join(path,
+		time.Now().Format("2006-01-02_15.04.05"))+".log",
+		os.O_RDWR|os.O_CREATE, os.ModePerm)
 }
 
 func NewFileWriter(path string, maxFileSize, maxFolderSize int64) *fileWriter {
-	// ensure path format.
-	if !strings.HasSuffix(path, "/") {
-		path += "/"
-	}
-
 	w := fileWriter{
 		path:          path,
 		maxFileSize:   defaultMaxFileSize,

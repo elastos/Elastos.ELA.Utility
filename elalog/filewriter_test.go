@@ -1,6 +1,8 @@
 package elalog
 
 import (
+	"io"
+	"os"
 	"testing"
 	"time"
 )
@@ -8,7 +10,7 @@ import (
 func TestFileWriter(t *testing.T) {
 	w := NewFileWriter("./logs", 2*MBSize, 10*MBSize)
 
-	backend := NewBackend(w, Llongfile)
+	backend := NewBackend(io.MultiWriter(w, os.Stdout), Llongfile)
 	logger := backend.Logger("test", LevelInfo)
 
 	var total int64
