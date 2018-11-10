@@ -53,7 +53,8 @@ func ToProgramHash(code []byte) (*Uint168, error) {
 	case SMARTCONTRACT:
 		return Uint168FromBytes(sum168(PrefixSmartContract, code))
 	default:
-		return nil, errors.New("[ToProgramHash] error, unknown script type")
+		return Uint168FromBytes(sum168(PrefixSmartContract, code))
+		//return nil, errors.New("[ToProgramHash] error, unknown script type")
 	}
 }
 
