@@ -4,14 +4,13 @@ import (
 	"io"
 
 	"github.com/elastos/Elastos.ELA.Utility/p2p"
-	"github.com/elastos/Elastos.ELA/dpos/chain"
 )
 
 const MaxConfirmSize = 8276 //32+36*(33+32+65+33+65)
 
 type Confirm struct {
 	Command  string
-	Proposal chain.ProposalVoteSlot
+	Proposal DPosProposalVoteSlot
 }
 
 func (msg *Confirm) CMD() string {
