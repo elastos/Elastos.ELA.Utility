@@ -39,6 +39,7 @@ const (
 	CmdMerkleBlock = "merkleblock"
 	CmdReject      = "reject"
 	CmdTxFilter    = "txfilter"
+	CmdConfirm     = "confirm"
 )
 
 var (
