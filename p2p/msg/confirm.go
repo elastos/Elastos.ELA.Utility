@@ -9,7 +9,6 @@ import (
 const MaxConfirmSize = 8276 //32+36*(33+32+65+33+65)
 
 type Confirm struct {
-	Command  string
 	Proposal DPosProposalVoteSlot
 }
 
