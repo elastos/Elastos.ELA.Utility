@@ -111,7 +111,7 @@ func newLogFile(path string) (*os.File, error) {
 		}
 
 	} else if os.IsNotExist(err) {
-		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+		if err := os.MkdirAll(path, 0775); err != nil {
 			return nil, err
 		}
 
@@ -121,7 +121,7 @@ func newLogFile(path string) (*os.File, error) {
 
 	return os.OpenFile(filepath.Join(path,
 		time.Now().Format("2006-01-02_15.04.05"))+".log",
-		os.O_RDWR|os.O_CREATE, os.ModePerm)
+		os.O_RDWR|os.O_CREATE, 0664)
 }
 
 func NewFileWriter(path string, maxFileSize, maxFolderSize int64) *fileWriter {
