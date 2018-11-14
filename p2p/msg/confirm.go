@@ -1,15 +1,21 @@
 package msg
 
 import (
-	"io"
-
+	"github.com/elastos/Elastos.ELA.Utility/common"
 	"github.com/elastos/Elastos.ELA.Utility/p2p"
 )
 
 const MaxConfirmSize = 8276 //32+36*(33+32+65+33+65)
 
+// Ensure Confirm implement p2p.Message interface.
+var _ p2p.Message = (*Confirm)(nil)
+
 type Confirm struct {
-	Proposal DPosProposalVoteSlot
+	common.Serializable
+}
+
+func NewConfirm(confirm common.Serializable) *Confirm {
+	return &Confirm{Serializable: confirm}
 }
 
 func (msg *Confirm) CMD() string {
@@ -18,12 +24,4 @@ func (msg *Confirm) CMD() string {
 
 func (msg *Confirm) MaxLength() uint32 {
 	return MaxConfirmSize
-}
-
-func (msg *Confirm) Serialize(w io.Writer) error {
-	return msg.Proposal.Serialize(w)
-}
-
-func (msg *Confirm) Deserialize(r io.Reader) error {
-	return msg.Proposal.Deserialize(r)
 }
