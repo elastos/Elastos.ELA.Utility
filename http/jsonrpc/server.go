@@ -37,10 +37,10 @@ type Request struct {
 
 // Response represent the standard JSON-RPC Response data structure.
 type Response struct {
-	Id      interface{} `json:"id"`
+	Id      interface{} `json:"id,omitempty"`
 	Version string      `json:"jsonrpc"`
-	Result  interface{} `json:"result"`
-	Error   *util.Error `json:"error"`
+	Result  interface{} `json:"result,omitempty"`
+	Error   *util.Error `json:"error,omitempty"`
 }
 
 // error returns an error response to the http client.
