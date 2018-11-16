@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"encoding/hex"
 	"errors"
 	"io"
@@ -24,8 +25,8 @@ func (u Uint256) Compare(o Uint256) int {
 	return 0
 }
 
-func (u *Uint256) IsEqual(o Uint256) bool {
-	return *u == o
+func (u Uint256) IsEqual(o Uint256) bool {
+	return bytes.Equal(u[:], o[:])
 }
 
 func (u Uint256) String() string {
