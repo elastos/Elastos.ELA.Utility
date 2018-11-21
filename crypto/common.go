@@ -234,7 +234,7 @@ func AppendSignature(signerIndex int, signature, data, code, param []byte) ([]by
 		}
 		for i := 0; i < len(param); i += SignatureScriptLength {
 			// Remove length byte
-			sign := param[i : i+SignatureScriptLength][1:]
+			sign := param[i:i+SignatureScriptLength][1:]
 			publicKey := publicKeys[signerIndex][1:]
 			pubKey, err := DecodePoint(publicKey)
 			if err != nil {
@@ -250,4 +250,18 @@ func AppendSignature(signerIndex int, signature, data, code, param []byte) ([]by
 	// Append new signature
 	param = append(param, byte(len(signature)))
 	return append(param, signature...), nil
+}
+
+func PublicKeyToStandardProgramHash(pubKey []byte) (*Uint168, error) {
+	public, err := DecodePoint(pubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	redeemScript, err := CreateStandardRedeemScript(public)
+	if err != nil {
+		return nil, err
+	}
+
+	return ToProgramHash(redeemScript)
 }
