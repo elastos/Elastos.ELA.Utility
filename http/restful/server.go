@@ -40,27 +40,27 @@ func (s *Server) write(w http.ResponseWriter, data []byte) {
 }
 
 func (s *Server) response(w http.ResponseWriter, result interface{}, err error) {
-	resp := Response{Result: result}
+	resp := Response{
+		Result: result,
+		Error:  0,
+		Desc:   "Success",
+	}
 
-	code := 0
-	message := "Success"
 	if err != nil {
 		switch e := err.(type) {
 		case *util.Error:
-			code = e.Code
-			message = e.Message
+			resp.Error = e.Code
+			resp.Desc = e.Message
 
 		default:
-			code = http.StatusInternalServerError
-			message = err.Error()
+			resp.Error = http.StatusInternalServerError
+			resp.Desc = err.Error()
 		}
 	}
-	resp.Error = code
-	resp.Desc = message
 
 	data, err := json.Marshal(resp)
 	if err != nil {
-		log.Fatal("HTTP Handle - json.Marshal: %v", err)
+		log.Fatalf("HTTP Handle - json.Marshal: %v", err)
 		return
 	}
 	s.write(w, data)
