@@ -135,16 +135,13 @@ func (s *Server) parseParams(method string, array []interface{}) util.Params {
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//JSON RPC commands should be POSTs
-	if r.Method != "POST" {
-		log.Warn("HTTP JSON RPC Handle - Method!=\"POST\"")
-		http.Error(w, "JSON RPC procotol only allows POST method",
+	if r.Method != http.MethodPost {
+		http.Error(w, "JSON RPC protocol only allows POST method",
 			http.StatusMethodNotAllowed)
 		return
 	}
 
 	if r.Header["Content-Type"][0] != "application/json" {
-		log.Warn("HTTP JSON RPC Handle - Content-Type: ",
-			r.Header["Content-Type"][0], " not supported")
 		http.Error(w, "need content type to be application/json",
 			http.StatusUnsupportedMediaType)
 		return
@@ -158,7 +155,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warn("HTTP JSON RPC Handle - json.Unmarshal: ", err)
 		resp.error(w, http.StatusBadRequest, ParseError,
-			fmt.Sprintf("json parse failed: %s",err))
+			fmt.Sprintf("json parse failed: %s", err))
 		return
 	}
 
