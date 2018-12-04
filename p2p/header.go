@@ -9,25 +9,18 @@ import (
 	"github.com/elastos/Elastos.ELA.Utility/common"
 )
 
-const (
-	CMDLEN      = 12
-	CMDOFFSET   = 4
-	CHECKSUMLEN = 4
-	HEADERLEN   = 24
-)
-
-type header struct {
+type Header struct {
 	Magic    uint32
-	CMD      [CMDLEN]byte
+	CMD      [CMDSize]byte
 	Length   uint32
-	Checksum [CHECKSUMLEN]byte
+	Checksum [ChecksumSize]byte
 }
 
-func buildHeader(magic uint32, cmd string, body []byte) *header {
+func BuildHeader(magic uint32, cmd string, body []byte) *Header {
 	// Calculate Checksum
 	checksum := common.Sha256D(body)
 
-	header := new(header)
+	header := new(Header)
 	// Write Magic
 	header.Magic = magic
 	// Write CMD
@@ -35,15 +28,15 @@ func buildHeader(magic uint32, cmd string, body []byte) *header {
 	// Write Length
 	header.Length = uint32(len(body))
 	// Write Checksum
-	copy(header.Checksum[:], checksum[:CHECKSUMLEN])
+	copy(header.Checksum[:], checksum[:ChecksumSize])
 
 	return header
 }
 
-func (header *header) Verify(buf []byte) error {
+func (header *Header) Verify(buf []byte) error {
 	// Verify Checksum
 	sum := common.Sha256D(buf)
-	checksum := sum[:CHECKSUMLEN]
+	checksum := sum[:ChecksumSize]
 	if !bytes.Equal(header.Checksum[:], checksum) {
 		return fmt.Errorf("unmatched body checksum")
 	}
@@ -51,7 +44,7 @@ func (header *header) Verify(buf []byte) error {
 	return nil
 }
 
-func (header *header) Serialize() ([]byte, error) {
+func (header *Header) Serialize() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, binary.LittleEndian, header)
 	if err != nil {
@@ -61,18 +54,17 @@ func (header *header) Serialize() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (header *header) Deserialize(buf []byte) error {
-	cmd := buf[CMDOFFSET : CMDOFFSET+CMDLEN]
+func (header *Header) Deserialize(buf []byte) error {
+	cmd := buf[CMDOffset : CMDOffset+CMDSize]
 	end := bytes.IndexByte(cmd, 0)
-	if end < 0 || end >= CMDLEN {
+	if end < 0 || end >= CMDSize {
 		return errors.New("unexpected length of CMD")
 	}
 
-	hdr := bytes.NewReader(buf[:HEADERLEN])
+	hdr := bytes.NewReader(buf[:HeaderSize])
 	return binary.Read(hdr, binary.LittleEndian, header)
 }
 
-func (header *header) GetCMD() string {
-	end := bytes.IndexByte(header.CMD[:], 0)
-	return string(header.CMD[:end])
+func (header *Header) GetCMD() string {
+	return string(bytes.TrimRight(header.CMD[:], string(0)))
 }

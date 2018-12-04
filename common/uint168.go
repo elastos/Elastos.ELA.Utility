@@ -1,7 +1,6 @@
 package common
 
 import (
-	"encoding/binary"
 	"errors"
 	"io"
 	"math/big"
@@ -14,10 +13,12 @@ const (
 	UINT168SIZE = 21
 	// Address types
 	STANDARD   = 0xAC
+	REGISTERID = 0xAD
 	MULTISIG   = 0xAE
 	CROSSCHAIN = 0xAF
 
 	PrefixStandard   = 0x21
+	PrefixRegisterId = 0x67
 	PrefixMultisig   = 0x12
 	PrefixCrossChain = 0x4B
 )
@@ -51,11 +52,13 @@ func (u *Uint168) Bytes() []byte {
 }
 
 func (u *Uint168) Serialize(w io.Writer) error {
-	return binary.Write(w, binary.LittleEndian, u)
+	_, err := w.Write(u[:])
+	return err
 }
 
 func (u *Uint168) Deserialize(r io.Reader) error {
-	return binary.Read(r, binary.LittleEndian, u)
+	_, err := io.ReadFull(r, u[:])
+	return err
 }
 
 func (u *Uint168) ToAddress() (string, error) {
