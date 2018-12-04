@@ -7,6 +7,9 @@ import (
 	"github.com/elastos/Elastos.ELA.Utility/p2p"
 )
 
+// Ensure GetData implement p2p.Message interface.
+var _ p2p.Message = (*GetData)(nil)
+
 type GetData struct {
 	Hash common.Uint256
 }
@@ -19,10 +22,14 @@ func (msg *GetData) CMD() string {
 	return p2p.CmdGetData
 }
 
+func (msg *GetData) MaxLength() uint32 {
+	return common.UINT256SIZE
+}
+
 func (msg *GetData) Serialize(w io.Writer) error {
-	return common.WriteElement(w, msg.Hash)
+	return msg.Hash.Serialize(w)
 }
 
 func (msg *GetData) Deserialize(r io.Reader) error {
-	return common.ReadElement(r, &msg.Hash)
+	return msg.Hash.Deserialize(r)
 }

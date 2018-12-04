@@ -26,6 +26,15 @@ func (m *TestMsg) CMD() string {
 	return m.cmd
 }
 
+func (m *TestMsg) MaxLength() uint32 {
+	switch m.cmd {
+	case CmdBlock:
+		return 1024 * 1024 * 8
+	default:
+		return 1024 * 1024
+	}
+}
+
 func (m *TestMsg) Serialize(writer io.Writer) error {
 	_, err := writer.Write(m.body)
 	return err
@@ -107,6 +116,18 @@ func (h *TestMsgHandler) Read(msg []byte) (Message, error) {
 	}
 }
 
+func (h *TestMsgHandler) Clear() {
+clear:
+	for {
+		select {
+		case <-h.msgChan:
+		case <-h.errChan:
+		default:
+			break clear
+		}
+	}
+}
+
 func (h *TestMsgHandler) Stop() {
 	h.thisHelper.conn.Close()
 	h.thatHelper.conn.Close()
@@ -169,57 +190,64 @@ func (h *TestMsgHandler) OnMessageDecoded(msg Message) {
 	h.msgChan <- msg
 }
 
-var handler *TestMsgHandler
-
-func TestNewMsgHelper(t *testing.T) {
-	handler = NewTestMsgHandler(987654321, 1024*1024*8, 22222)
+func TestHeader_Read_And_Write(t *testing.T) {
+	handler := NewTestMsgHandler(987654321, 1024*1024*8, 22222)
 
 	err := handler.Start()
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-}
-
-func TestMsgHelper_Read_And_Write(t *testing.T) {
 	// no cmd
 	var body = make([]byte, 1024*8)
 	rand.Read(body)
-	header, err := buildHeader(987654321, "", body).Serialize()
+	header, err := BuildHeader(987654321, "", body).Serialize()
 	assert.NoError(t, err)
 	_, err = handler.Read(append(header, body...))
-	assert.EqualError(t, err, "[MsgHelper] make message failed unknown message type")
+	assert.EqualError(t, err, "[P2P] make message failed unknown message type")
 	_, err = handler.Write(append(header, body...))
-	assert.EqualError(t, err, "[MsgHelper] make message failed unknown message type")
+	assert.EqualError(t, err, "[P2P] make message failed unknown message type")
 
 	// unknown cmd
-	header, err = buildHeader(987654321, "unknown", body).Serialize()
+	header, err = BuildHeader(987654321, "unknown", body).Serialize()
 	assert.NoError(t, err)
 	_, err = handler.Read(append(header, body...))
-	assert.EqualError(t, err, "[MsgHelper] make message failed unknown message type")
+	assert.EqualError(t, err, "[P2P] make message failed unknown message type")
 	_, err = handler.Write(append(header, body...))
-	assert.EqualError(t, err, "[MsgHelper] make message failed unknown message type")
+	assert.EqualError(t, err, "[P2P] make message failed unknown message type")
 
 	// cmd too long
-	hdr := buildHeader(987654321, "", body)
+	hdr := BuildHeader(987654321, "", body)
 	for i := range hdr.CMD {
 		hdr.CMD[i] = 1
 	}
 	header, err = hdr.Serialize()
 	assert.NoError(t, err)
 	_, err = handler.Read(append(header, body...))
-	assert.EqualError(t, err, "[MsgHelper] invalid message header")
+	assert.EqualError(t, err, "[P2P] invalid message header")
 	_, err = handler.Write(append(header, body...))
-	assert.EqualError(t, err, "[MsgHelper] invalid message header")
+	assert.EqualError(t, err, "[P2P] invalid message header")
 
 	// tamper message body
-	hdr = buildHeader(987654321, CmdVersion, body)
+	hdr = BuildHeader(987654321, CmdVersion, body)
 	header, err = hdr.Serialize()
 	assert.NoError(t, err)
 	rand.Read(body)
 	_, err = handler.Read(append(header, body...))
-	assert.EqualError(t, err, "[MsgHelper] verify message header failed Unmatched body checksum")
+	assert.EqualError(t, err, "[P2P] verify message header failed unmatched body checksum")
 	_, err = handler.Write(append(header, body...))
-	assert.EqualError(t, err, "[MsgHelper] verify message header failed Unmatched body checksum")
+	assert.EqualError(t, err, "[P2P] verify message header failed unmatched body checksum")
+
+	// disconnect
+	handler.Stop()
+}
+
+func TestMessages_Read_And_Write(t *testing.T) {
+	handler := NewTestMsgHandler(987654321, 1024*1024*8, 22223)
+
+	err := handler.Start()
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
 
 	// cmds
 	cmds := []string{
@@ -253,7 +281,7 @@ func TestMsgHelper_Read_And_Write(t *testing.T) {
 	}
 
 	// 8MB big message
-	body = make([]byte, 1024*1024*8)
+	body := make([]byte, 1024*1024*8)
 	msg, err := handler.WriteMsg(NewTestMsg(CmdBlock, body))
 	if assert.NoError(t, err) {
 		assert.Equal(t, CmdBlock, msg.CMD())
@@ -263,13 +291,43 @@ func TestMsgHelper_Read_And_Write(t *testing.T) {
 		assert.Equal(t, CmdBlock, msg.CMD())
 	}
 
-	// exceeded message size
-	body = make([]byte, 1024*1024*8+1)
-	msg, err = handler.WriteMsg(NewTestMsg(CmdBlock, body))
-	assert.EqualError(t, err, "[MsgHelper] message size exceeded")
-}
-
-func TestMsgHelperDone(t *testing.T) {
 	// disconnect
 	handler.Stop()
 }
+
+
+func TestMsgSizeExceeded(t *testing.T) {
+	handler := NewTestMsgHandler(987654321, 1024*1024*6, 22224)
+
+	err := handler.Start()
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	// exceeded message size
+	body := make([]byte, 1024*1024*6+1)
+	_, err = handler.WriteMsg(NewTestMsg(CmdBlock, body))
+	assert.EqualError(t, err, "[P2P] message size exceeded")
+	handler.Clear()
+
+	// disconnect
+	handler.Stop()
+}
+
+func TestMaxLengthExceeded(t *testing.T) {
+	handler := NewTestMsgHandler(987654321, 1024*1024*8, 22225)
+
+	err := handler.Start()
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	// exceeded message size
+	body := make([]byte, 1024*1024+1)
+	_, err = handler.WriteMsg(NewTestMsg(CmdFilterLoad, body))
+	assert.EqualError(t, err, "[P2P] message size exceeded")
+
+	// disconnect
+	handler.Stop()
+}
+
