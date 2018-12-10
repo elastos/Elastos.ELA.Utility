@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 
-	. "github.com/elastos/Elastos.ELA.Utility/common"
+	"github.com/elastos/Elastos.ELA.Utility/common"
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -23,7 +23,7 @@ const (
 	MinMultiSignCodeLength = 71
 )
 
-func ToProgramHash(code []byte) (*Uint168, error) {
+func ToProgramHash(code []byte) (*common.Uint168, error) {
 	if len(code) < 1 {
 		return nil, errors.New("[ToProgramHash] failed, empty program code")
 	}
@@ -36,20 +36,20 @@ func ToProgramHash(code []byte) (*Uint168, error) {
 	}
 
 	switch code[len(code)-1] {
-	case STANDARD:
+	case common.STANDARD:
 		if len(code) != PublicKeyScriptLength {
 			return nil, errors.New("[ToProgramHash] error, not a valid checksig script")
 		}
-		return Uint168FromBytes(sum168(PrefixStandard, code))
-	case MULTISIG:
+		return common.Uint168FromBytes(sum168(common.PrefixStandard, code))
+	case common.MULTISIG:
 		if len(code) < MinMultiSignCodeLength || (len(code)-3)%(PublicKeyScriptLength-1) != 0 {
 			return nil, errors.New("[ToProgramHash] error, not a valid multisig script")
 		}
-		return Uint168FromBytes(sum168(PrefixMultisig, code))
-	case CROSSCHAIN:
-		return Uint168FromBytes(sum168(PrefixCrossChain, code))
-	case REGISTERID:
-		return Uint168FromBytes(sum168(PrefixRegisterId, code))
+		return common.Uint168FromBytes(sum168(common.PrefixMultisig, code))
+	case common.CROSSCHAIN:
+		return common.Uint168FromBytes(sum168(common.PrefixCrossChain, code))
+	case common.REGISTERID:
+		return common.Uint168FromBytes(sum168(common.PrefixRegisterId, code))
 	default:
 		return nil, errors.New("[ToProgramHash] error, unknown script type")
 	}
@@ -63,7 +63,7 @@ func CreateStandardRedeemScript(publicKey *PublicKey) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	buf.WriteByte(byte(len(content)))
 	buf.Write(content)
-	buf.WriteByte(byte(STANDARD))
+	buf.WriteByte(byte(common.STANDARD))
 
 	return buf.Bytes(), nil
 }
@@ -89,29 +89,29 @@ func CreateMultiSignRedeemScript(M uint, publicKeys []*PublicKey) ([]byte, error
 	// Write N
 	N := len(publicKeys)
 	buf.WriteByte(byte(PUSH1 + N - 1))
-	buf.WriteByte(MULTISIG)
+	buf.WriteByte(common.MULTISIG)
 
 	return buf.Bytes(), nil
 }
 
-func CreateCrossChainRedeemScript(genesisHash Uint256) []byte {
+func CreateCrossChainRedeemScript(genesisHash common.Uint256) []byte {
 	buf := new(bytes.Buffer)
 	buf.WriteByte(byte(len(genesisHash.Bytes())))
 	buf.Write(genesisHash.Bytes())
-	buf.WriteByte(byte(CROSSCHAIN))
+	buf.WriteByte(byte(common.CROSSCHAIN))
 
 	return buf.Bytes()
 }
 
 func ParseMultisigScript(code []byte) ([][]byte, error) {
-	if len(code) < MinMultiSignCodeLength || code[len(code)-1] != MULTISIG {
+	if len(code) < MinMultiSignCodeLength || code[len(code)-1] != common.MULTISIG {
 		return nil, errors.New("not a valid multi sign transaction code, length not enough")
 	}
 	return parsePublicKeys(code)
 }
 
 func ParseCrossChainScript(code []byte) ([][]byte, error) {
-	if len(code) < MinMultiSignCodeLength || code[len(code)-1] != CROSSCHAIN {
+	if len(code) < MinMultiSignCodeLength || code[len(code)-1] != common.CROSSCHAIN {
 		return nil, errors.New("not a valid cross chain transaction code, length not enough")
 	}
 	return parsePublicKeys(code)
@@ -146,8 +146,8 @@ func GetScriptType(script []byte) (byte, error) {
 	return script[len(script)-1], nil
 }
 
-func GetSigner(code []byte) (*Uint168, error) {
-	if len(code) != PublicKeyScriptLength || code[len(code)-1] != STANDARD {
+func GetSigner(code []byte) (*common.Uint168, error) {
+	if len(code) != PublicKeyScriptLength || code[len(code)-1] != common.STANDARD {
 		return nil, errors.New("not a valid standard transaction code, length not match")
 	}
 	// remove last byte STANDARD
@@ -158,15 +158,15 @@ func GetSigner(code []byte) (*Uint168, error) {
 	return ToProgramHash(script)
 }
 
-func GetCrossChainSigners(code []byte) ([]*Uint168, error) {
+func GetCrossChainSigners(code []byte) ([]*common.Uint168, error) {
 	scripts, err := ParseCrossChainScript(code)
 	if err != nil {
 		return nil, err
 	}
 
-	var signers []*Uint168
+	var signers []*common.Uint168
 	for _, script := range scripts {
-		script = append(script, STANDARD)
+		script = append(script, common.STANDARD)
 		hash, _ := ToProgramHash(script)
 		signers = append(signers, hash)
 	}
@@ -174,15 +174,15 @@ func GetCrossChainSigners(code []byte) ([]*Uint168, error) {
 	return signers, nil
 }
 
-func GetSigners(code []byte) ([]*Uint168, error) {
+func GetSigners(code []byte) ([]*common.Uint168, error) {
 	scripts, err := ParseMultisigScript(code)
 	if err != nil {
 		return nil, err
 	}
 
-	var signers []*Uint168
+	var signers []*common.Uint168
 	for _, script := range scripts {
-		script = append(script, STANDARD)
+		script = append(script, common.STANDARD)
 		hash, _ := ToProgramHash(script)
 		signers = append(signers, hash)
 	}
@@ -195,7 +195,7 @@ func GetM(code []byte) (uint, error) {
 	if err != nil {
 		return 0, err
 	}
-	if scriptType != MULTISIG {
+	if scriptType != common.MULTISIG {
 		return 0, errors.New("not a multisig script")
 	}
 	return getM(code), nil
@@ -211,11 +211,11 @@ func GetSignStatus(code, param []byte) (haveSign, needSign int, err error) {
 		return -1, -1, err
 	}
 
-	if scriptType == STANDARD {
+	if scriptType == common.STANDARD {
 		signed := len(param) / SignatureScriptLength
 		return signed, 1, nil
 
-	} else if scriptType == MULTISIG {
+	} else if scriptType == common.MULTISIG {
 
 		haveSign = len(param) / SignatureScriptLength
 
