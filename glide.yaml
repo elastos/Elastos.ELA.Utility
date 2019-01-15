@@ -1,3 +1,0 @@
-package: github.com/elastos/Elastos.ELA.Utility
-import:
-- package: github.com/itchyny/base58-go
