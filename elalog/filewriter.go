@@ -87,6 +87,11 @@ func (w *fileWriter) writeHandler() {
 		if atomic.AddInt64(&folderSize, bufLen) >= w.maxFolderSize {
 			var total int64
 			files, _ := ioutil.ReadDir(w.path)
+			if len(files) == 0 {
+				fmt.Println("get oldest log file failed")
+				continue
+			}
+
 			for _, f := range files {
 				total += f.Size()
 			}
